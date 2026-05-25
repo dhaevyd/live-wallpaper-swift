@@ -1,4 +1,4 @@
-[200~import Cocoa
+import Cocoa
 
 class HomeViewController: NSViewController {
     var wallpaperController: WallpaperController
