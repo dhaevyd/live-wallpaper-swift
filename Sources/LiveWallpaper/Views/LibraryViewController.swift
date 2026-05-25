@@ -180,16 +180,17 @@ class LibraryVideoItem: NSCollectionViewItem {
     var onSelect: ((URL) -> Void)?
 
     private var videoURL: URL?
-    private let imageView = NSImageView()
+    private let thumbnailView = NSImageView()
     private let titleLabel = WallflowTheme.label("", size: 11, weight: .semibold, color: .white)
     private let checkBadge = NSView()
     private var previewPlayer: AVPlayer?
     private var previewLayer: AVPlayerLayer?
     private var previewWorkItem: DispatchWorkItem?
-    private var trackingAreaRef: NSTrackingArea?
 
     override func loadView() {
-        view = NSView()
+        let contentView = LibraryVideoItemView()
+        contentView.item = self
+        view = contentView
         view.translatesAutoresizingMaskIntoConstraints = false
         view.wantsLayer = true
         view.layer?.cornerRadius = 8
@@ -201,10 +202,10 @@ class LibraryVideoItem: NSCollectionViewItem {
     }
 
     private func setupUI() {
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.wantsLayer = true
-        imageView.imageScaling = .scaleAxesIndependently
-        view.addSubview(imageView)
+        thumbnailView.translatesAutoresizingMaskIntoConstraints = false
+        thumbnailView.wantsLayer = true
+        thumbnailView.imageScaling = .scaleAxesIndependently
+        view.addSubview(thumbnailView)
 
         titleLabel.lineBreakMode = .byTruncatingTail
         view.addSubview(titleLabel)
@@ -220,10 +221,10 @@ class LibraryVideoItem: NSCollectionViewItem {
         checkBadge.addSubview(check)
 
         NSLayoutConstraint.activate([
-            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            imageView.topAnchor.constraint(equalTo: view.topAnchor),
-            imageView.heightAnchor.constraint(equalTo: view.heightAnchor, constant: -30),
+            thumbnailView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            thumbnailView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            thumbnailView.topAnchor.constraint(equalTo: view.topAnchor),
+            thumbnailView.heightAnchor.constraint(equalTo: view.heightAnchor, constant: -30),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             titleLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
@@ -238,16 +239,6 @@ class LibraryVideoItem: NSCollectionViewItem {
         ])
     }
 
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        if let trackingAreaRef = trackingAreaRef {
-            view.removeTrackingArea(trackingAreaRef)
-        }
-        let area = NSTrackingArea(rect: view.bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self, userInfo: nil)
-        trackingAreaRef = area
-        view.addTrackingArea(area)
-    }
-
     func configure(with url: URL, isCurrent: Bool) {
         videoURL = url
         titleLabel.stringValue = url.lastPathComponent
@@ -257,7 +248,7 @@ class LibraryVideoItem: NSCollectionViewItem {
     }
 
     private func generateThumbnail(url: URL) {
-        imageView.image = nil
+        thumbnailView.image = nil
         let asset = AVAsset(url: url)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
@@ -266,31 +257,31 @@ class LibraryVideoItem: NSCollectionViewItem {
             let cgImage = try? generator.copyCGImage(at: time, actualTime: nil)
             DispatchQueue.main.async {
                 guard self.videoURL == url, let cgImage = cgImage else { return }
-                self.imageView.image = NSImage(cgImage: cgImage, size: .zero)
+                self.thumbnailView.image = NSImage(cgImage: cgImage, size: .zero)
             }
         }
     }
 
-    override func mouseEntered(with event: NSEvent) {
+    func handleMouseEntered() {
         previewWorkItem?.cancel()
         let item = DispatchWorkItem { [weak self] in self?.startPreview() }
         previewWorkItem = item
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: item)
     }
 
-    override func mouseExited(with event: NSEvent) {
+    func handleMouseExited() {
         previewWorkItem?.cancel()
         stopPreview()
     }
 
-    override func mouseDown(with event: NSEvent) {
+    func handleMouseDown() {
         guard let videoURL = videoURL else { return }
         onSelect?(videoURL)
     }
 
     private func startPreview() {
         guard previewPlayer == nil, let url = videoURL else { return }
-        imageView.isHidden = true
+        thumbnailView.isHidden = true
         let player = AVPlayer(url: url)
         player.isMuted = true
         let layer = AVPlayerLayer(player: player)
@@ -307,15 +298,48 @@ class LibraryVideoItem: NSCollectionViewItem {
         previewLayer?.removeFromSuperlayer()
         previewPlayer = nil
         previewLayer = nil
-        imageView.isHidden = false
+        thumbnailView.isHidden = false
     }
 
     override func viewDidLayout() {
         super.viewDidLayout()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        previewLayer?.frame = imageView.frame
+        previewLayer?.frame = thumbnailView.frame
         CATransaction.commit()
+    }
+}
+
+
+class LibraryVideoItemView: NSView {
+    weak var item: LibraryVideoItem?
+    private var trackingAreaRef: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingAreaRef = trackingAreaRef {
+            removeTrackingArea(trackingAreaRef)
+        }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        trackingAreaRef = area
+        addTrackingArea(area)
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        item?.handleMouseEntered()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        item?.handleMouseExited()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        item?.handleMouseDown()
     }
 }
 
