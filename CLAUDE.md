@@ -23,14 +23,15 @@ swiftc \
   Sources/LiveWallpaper/Views/ExploreViewController.swift \
   Sources/LiveWallpaper/Views/LibraryViewController.swift \
   Sources/LiveWallpaper/Views/SettingsViewController.swift \
-  Sources/LiveWallpaper/Views/Components/NavBar.swift \
+  Sources/LiveWallpaper/Views/Components/SidebarView.swift \
+  Sources/LiveWallpaper/Views/Components/ImageCache.swift \
   Sources/LiveWallpaper/Views/Components/HeroView.swift \
   Sources/LiveWallpaper/Views/Components/VideoCardView.swift \
   -target x86_64-apple-macosx11.0 \
   -framework Cocoa \
   -framework AVFoundation \
   -framework AVKit \
-  -o LiveWallpaper
+  -o Wallflow
 ```
 
 The CI workflow (`.github/workflows/build.yml`) runs the same command on `push` to `main` and uploads a zipped `.app` bundle as an artifact.
@@ -51,7 +52,7 @@ The app runs as an `.accessory` activation policy (no Dock icon) with a menu bar
 
 **Main window:**
 
-- `MainWindowController` (900×640, dark background) hosts a `NavBar` at the top and a content area below.
+- `MainWindowController` (900×640, dark background) hosts a left `SidebarView` and a flexible content area.
 - Four tabs: Home, Explore, Library, Settings — each backed by a dedicated `NSViewController`.
 - The Library tab calls `loadVideos()` on every tab switch to reflect newly downloaded files.
 

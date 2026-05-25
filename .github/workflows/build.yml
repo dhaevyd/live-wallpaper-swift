@@ -33,37 +33,38 @@ jobs:
             Sources/LiveWallpaper/Views/ExploreViewController.swift \
             Sources/LiveWallpaper/Views/LibraryViewController.swift \
             Sources/LiveWallpaper/Views/SettingsViewController.swift \
-            Sources/LiveWallpaper/Views/Components/NavBar.swift \
+            Sources/LiveWallpaper/Views/Components/SidebarView.swift \
+            Sources/LiveWallpaper/Views/Components/ImageCache.swift \
             Sources/LiveWallpaper/Views/Components/HeroView.swift \
             Sources/LiveWallpaper/Views/Components/VideoCardView.swift \
             -target x86_64-apple-macosx11.0 \
             -framework Cocoa \
             -framework AVFoundation \
             -framework AVKit \
-            -o LiveWallpaper 2>&1
+            -o Wallflow 2>&1
 
       - name: Check binary exists
         run: |
           ls -la
-          file LiveWallpaper
+          file Wallflow
 
       - name: Create .app Bundle
         run: |
-          mkdir -p LiveWallpaper.app/Contents/MacOS
-          mkdir -p LiveWallpaper.app/Contents/Resources
-          mv LiveWallpaper LiveWallpaper.app/Contents/MacOS/
-          cat > LiveWallpaper.app/Contents/Info.plist << 'EOF'
+          mkdir -p Wallflow.app/Contents/MacOS
+          mkdir -p Wallflow.app/Contents/Resources
+          mv Wallflow Wallflow.app/Contents/MacOS/
+          cat > Wallflow.app/Contents/Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
           "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
               <key>CFBundleExecutable</key>
-              <string>LiveWallpaper</string>
+              <string>Wallflow</string>
               <key>CFBundleIdentifier</key>
               <string>com.livewallpaper.app</string>
               <key>CFBundleName</key>
-              <string>LiveWallpaper</string>
+              <string>Wallflow</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>
               <key>CFBundleShortVersionString</key>
@@ -82,10 +83,10 @@ jobs:
 
       - name: Zip .app
         run: |
-          zip -r LiveWallpaper.zip LiveWallpaper.app
+          zip -r Wallflow.zip Wallflow.app
 
       - name: Upload .app
         uses: actions/upload-artifact@v4
         with:
-          name: LiveWallpaper
-          path: LiveWallpaper.zip
+          name: Wallflow
+          path: Wallflow.zip

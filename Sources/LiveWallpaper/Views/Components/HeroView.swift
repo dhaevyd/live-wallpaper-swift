@@ -2,22 +2,25 @@ import Cocoa
 import AVFoundation
 
 class HeroView: NSView {
-    var player: AVPlayer?
-    var playerLayer: AVPlayerLayer?
-    var gradientLayer: CAGradientLayer?
     var onSetAsWallpaper: ((PexelsVideo) -> Void)?
     var currentVideo: PexelsVideo?
 
-    // UI Elements
-    var categoryLabel: NSTextField!
-    var titleLabel: NSTextField!
-    var metaLabel: NSTextField!
-    var setWallpaperBtn: NSButton!
-    var thumbnailsRow: NSScrollView!
-    var thumbnailsContainer: NSView!
+    private var player: AVPlayer?
+    private var playerLayer: AVPlayerLayer?
+    private var imageLayer: CALayer?
+    private let gradientLayer = CAGradientLayer()
+    private let pulseDot = NSView()
+    private let categoryLabel = WallflowTheme.label("FEATURED", size: 10, weight: .bold, color: WallflowTheme.accent, tracking: 2.4)
+    private let titleLabel = WallflowTheme.label("", size: 36, weight: .black, color: .white)
+    private let metaLabel = WallflowTheme.label("", size: 12, weight: .regular, color: NSColor.white.withAlphaComponent(0.62))
+    private let setWallpaperBtn = NSButton(title: "SET WALLPAPER", target: nil, action: nil)
+    private let nowPlaying = WallflowTheme.label("NOW PLAYING", size: 9, weight: .bold, color: WallflowTheme.accent, tracking: 2)
+    private let badge4k = WallflowTheme.label("4K", size: 10, weight: .bold, color: WallflowTheme.accent, tracking: 1.4)
+    private let thumbnailsRow = NSScrollView()
+    private let thumbnailsStack = NSStackView()
 
-    override init(frame: NSRect) {
-        super.init(frame: frame)
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
         setupUI()
     }
 
@@ -25,151 +28,202 @@ class HeroView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func setupUI() {
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.black.cgColor
-
-        // Gradient overlay
-        gradientLayer = CAGradientLayer()
-        gradientLayer!.frame = bounds
-        gradientLayer!.colors = [
-            NSColor.clear.cgColor,
-            NSColor.black.withAlphaComponent(0.3).cgColor,
-            NSColor.black.withAlphaComponent(0.8).cgColor
-        ]
-        gradientLayer!.locations = [0.0, 0.5, 1.0]
-        layer?.addSublayer(gradientLayer!)
-
-        // Category label
-        categoryLabel = NSTextField(labelWithString: "FEATURED")
-        categoryLabel.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
-        categoryLabel.textColor = NSColor.white.withAlphaComponent(0.8)
-        categoryLabel.frame = NSRect(x: 40, y: 220, width: 200, height: 20)
-        addSubview(categoryLabel)
-
-        // Title label
-        titleLabel = NSTextField(labelWithString: "")
-        titleLabel.font = NSFont.boldSystemFont(ofSize: 32)
-        titleLabel.textColor = .white
-        titleLabel.frame = NSRect(x: 40, y: 170, width: 600, height: 45)
-        titleLabel.lineBreakMode = .byTruncatingTail
-        addSubview(titleLabel)
-
-        // Meta label
-        metaLabel = NSTextField(labelWithString: "")
-        metaLabel.font = NSFont.systemFont(ofSize: 12)
-        metaLabel.textColor = NSColor.white.withAlphaComponent(0.7)
-        metaLabel.frame = NSRect(x: 40, y: 148, width: 400, height: 20)
-        addSubview(metaLabel)
-
-        // Set as wallpaper button
-        setWallpaperBtn = NSButton(
-            title: "Set as Wallpaper  ↗",
-            target: self,
-            action: #selector(setAsWallpaper)
-        )
-        setWallpaperBtn.frame = NSRect(x: 40, y: 100, width: 180, height: 36)
-        setWallpaperBtn.wantsLayer = true
-        setWallpaperBtn.layer?.backgroundColor = NSColor.white
-            .withAlphaComponent(0.2).cgColor
-        setWallpaperBtn.layer?.cornerRadius = 18
-        setWallpaperBtn.isBordered = false
-        setWallpaperBtn.font = NSFont.systemFont(ofSize: 13, weight: .medium)
-        setWallpaperBtn.contentTintColor = .white
-        addSubview(setWallpaperBtn)
-
-        // Thumbnails row
-        setupThumbnailsRow()
+    deinit {
+        player?.pause()
+        player = nil
     }
 
-    func setupThumbnailsRow() {
-        thumbnailsContainer = NSView(
-            frame: NSRect(x: 0, y: 10, width: 2000, height: 80)
-        )
+    private func setupUI() {
+        translatesAutoresizingMaskIntoConstraints = false
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.black.cgColor
+        layer?.cornerRadius = 10
+        layer?.masksToBounds = true
 
-        thumbnailsRow = NSScrollView(
-            frame: NSRect(x: 40, y: 10, width: bounds.width - 80, height: 80)
-        )
-        thumbnailsRow.documentView = thumbnailsContainer
-        thumbnailsRow.hasHorizontalScroller = false
+        gradientLayer.colors = [
+            NSColor.clear.cgColor,
+            NSColor.black.withAlphaComponent(0.72).cgColor,
+            NSColor.black.withAlphaComponent(0.95).cgColor
+        ]
+        gradientLayer.locations = [0.0, 0.55, 1.0]
+        layer?.addSublayer(gradientLayer)
+
+        pulseDot.translatesAutoresizingMaskIntoConstraints = false
+        pulseDot.wantsLayer = true
+        pulseDot.layer?.backgroundColor = WallflowTheme.accent.cgColor
+        pulseDot.layer?.cornerRadius = 4
+        addSubview(pulseDot)
+        addSubview(nowPlaying)
+
+        badge4k.alignment = .center
+        badge4k.wantsLayer = true
+        badge4k.layer?.cornerRadius = 6
+        badge4k.layer?.borderWidth = 1
+        badge4k.layer?.borderColor = WallflowTheme.accent.cgColor
+        badge4k.isHidden = true
+        addSubview(badge4k)
+
+        titleLabel.maximumNumberOfLines = 1
+        titleLabel.lineBreakMode = .byTruncatingTail
+        addSubview(categoryLabel)
+        addSubview(titleLabel)
+        addSubview(metaLabel)
+
+        setWallpaperBtn.translatesAutoresizingMaskIntoConstraints = false
+        setWallpaperBtn.target = self
+        setWallpaperBtn.action = #selector(setAsWallpaper)
+        setWallpaperBtn.isBordered = false
+        setWallpaperBtn.font = NSFont.systemFont(ofSize: 9, weight: .heavy)
+        setWallpaperBtn.contentTintColor = .black
+        setWallpaperBtn.wantsLayer = true
+        setWallpaperBtn.layer?.backgroundColor = WallflowTheme.accent.cgColor
+        setWallpaperBtn.layer?.cornerRadius = 3
+        addSubview(setWallpaperBtn)
+
+        thumbnailsRow.translatesAutoresizingMaskIntoConstraints = false
         thumbnailsRow.drawsBackground = false
+        thumbnailsRow.hasHorizontalScroller = false
+        thumbnailsRow.hasVerticalScroller = false
+        thumbnailsStack.translatesAutoresizingMaskIntoConstraints = false
+        thumbnailsStack.orientation = .horizontal
+        thumbnailsStack.spacing = 10
+        thumbnailsRow.documentView = thumbnailsStack
         addSubview(thumbnailsRow)
+
+        NSLayoutConstraint.activate([
+            pulseDot.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 24),
+            pulseDot.topAnchor.constraint(equalTo: topAnchor, constant: 22),
+            pulseDot.widthAnchor.constraint(equalToConstant: 8),
+            pulseDot.heightAnchor.constraint(equalToConstant: 8),
+            nowPlaying.centerYAnchor.constraint(equalTo: pulseDot.centerYAnchor),
+            nowPlaying.leadingAnchor.constraint(equalTo: pulseDot.trailingAnchor, constant: 8),
+
+            badge4k.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -24),
+            badge4k.topAnchor.constraint(equalTo: topAnchor, constant: 18),
+            badge4k.widthAnchor.constraint(equalToConstant: 44),
+            badge4k.heightAnchor.constraint(equalToConstant: 24),
+
+            categoryLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 32),
+            categoryLabel.bottomAnchor.constraint(equalTo: titleLabel.topAnchor, constant: -8),
+            titleLabel.leadingAnchor.constraint(equalTo: categoryLabel.leadingAnchor),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -160),
+            titleLabel.bottomAnchor.constraint(equalTo: metaLabel.topAnchor, constant: -4),
+            metaLabel.leadingAnchor.constraint(equalTo: categoryLabel.leadingAnchor),
+            metaLabel.bottomAnchor.constraint(equalTo: setWallpaperBtn.topAnchor, constant: -16),
+
+            setWallpaperBtn.leadingAnchor.constraint(equalTo: categoryLabel.leadingAnchor),
+            setWallpaperBtn.bottomAnchor.constraint(equalTo: thumbnailsRow.topAnchor, constant: -16),
+            setWallpaperBtn.widthAnchor.constraint(equalToConstant: 126),
+            setWallpaperBtn.heightAnchor.constraint(equalToConstant: 30),
+
+            thumbnailsRow.leadingAnchor.constraint(equalTo: categoryLabel.leadingAnchor),
+            thumbnailsRow.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -32),
+            thumbnailsRow.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -18),
+            thumbnailsRow.heightAnchor.constraint(equalToConstant: 68),
+            thumbnailsStack.leadingAnchor.constraint(equalTo: thumbnailsRow.contentView.leadingAnchor),
+            thumbnailsStack.topAnchor.constraint(equalTo: thumbnailsRow.contentView.topAnchor),
+            thumbnailsStack.bottomAnchor.constraint(equalTo: thumbnailsRow.contentView.bottomAnchor),
+            thumbnailsStack.heightAnchor.constraint(equalTo: thumbnailsRow.heightAnchor)
+        ])
     }
 
     func configure(with video: PexelsVideo, related: [PexelsVideo]) {
         currentVideo = video
-        titleLabel.stringValue = video.title
-        metaLabel.stringValue = "\(video.width)x\(video.height)  •  \(video.duration)s"
+        titleLabel.stringValue = video.title.uppercased()
+        metaLabel.stringValue = "\(video.width)x\(video.height)  /  \(video.duration)s  /  \(video.user.name)"
+        badge4k.isHidden = video.width < 3840
 
-        // Load thumbnail image
         if let url = URL(string: video.image) {
-            loadImage(url: url) { image in
+            ImageCache.shared.image(for: url) { image in
+                guard self.currentVideo?.id == video.id, let image = image else { return }
                 self.showThumbnailBackground(image: image)
             }
         }
 
-        // Populate thumbnails row
+        if let link = video.bestVideoFile?.link, let url = URL(string: link) {
+            startPlayer(url: url)
+        }
         populateThumbnails(videos: related)
     }
 
-    func showThumbnailBackground(image: NSImage) {
-        let imageLayer = CALayer()
-        imageLayer.frame = bounds
-        imageLayer.contents = image
-        imageLayer.contentsGravity = .resizeAspectFill
-        layer?.insertSublayer(imageLayer, at: 0)
-        gradientLayer?.frame = bounds
-        layer?.insertSublayer(gradientLayer!, above: imageLayer)
+    func suspendPlayback() {
+        player?.rate = 0
     }
 
-    func populateThumbnails(videos: [PexelsVideo]) {
-        thumbnailsContainer.subviews.forEach { $0.removeFromSuperview() }
+    func resumePlayback() {
+        if currentVideo != nil {
+            player?.play()
+        }
+    }
 
-        var x: CGFloat = 0
-        for video in videos.prefix(10) {
-            let thumb = MiniThumbnail(
-                frame: NSRect(x: x, y: 0, width: 120, height: 75)
-            )
-            thumb.configure(with: video)
-            thumbnailsContainer.addSubview(thumb)
-            x += 130
+    private func startPlayer(url: URL) {
+        if player == nil {
+            player = AVPlayer(url: url)
+            player?.isMuted = true
+            playerLayer = AVPlayerLayer(player: player)
+            playerLayer?.videoGravity = .resizeAspectFill
+            if let playerLayer = playerLayer {
+                layer?.insertSublayer(playerLayer, at: 0)
+            }
+        } else {
+            player?.replaceCurrentItem(with: AVPlayerItem(url: url))
+        }
+        player?.isMuted = true
+        player?.play()
+    }
+
+    private func showThumbnailBackground(image: NSImage) {
+        imageLayer?.removeFromSuperlayer()
+        let layer = CALayer()
+        layer.contents = image
+        layer.contentsGravity = .resizeAspectFill
+        self.imageLayer = layer
+        self.layer?.insertSublayer(layer, at: 0)
+        if let playerLayer = playerLayer {
+            self.layer?.insertSublayer(playerLayer, above: layer)
+        }
+        needsLayout = true
+    }
+
+    private func populateThumbnails(videos: [PexelsVideo]) {
+        thumbnailsStack.arrangedSubviews.forEach { view in
+            thumbnailsStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
         }
 
-        thumbnailsContainer.frame = NSRect(
-            x: 0, y: 0,
-            width: x,
-            height: 80
-        )
+        for video in videos.prefix(8) {
+            let thumb = MiniThumbnail()
+            thumb.configure(with: video)
+            thumbnailsStack.addArrangedSubview(thumb)
+            NSLayoutConstraint.activate([
+                thumb.widthAnchor.constraint(equalToConstant: 108),
+                thumb.heightAnchor.constraint(equalToConstant: 64)
+            ])
+        }
     }
 
-    func loadImage(url: URL, completion: @escaping (NSImage) -> Void) {
-        URLSession.shared.dataTask(with: url) { data, _, _ in
-            if let data = data, let image = NSImage(data: data) {
-                DispatchQueue.main.async {
-                    completion(image)
-                }
-            }
-        }.resume()
-    }
-
-    @objc func setAsWallpaper() {
+    @objc private func setAsWallpaper() {
         guard let video = currentVideo else { return }
         onSetAsWallpaper?(video)
     }
 
     override func layout() {
         super.layout()
-        gradientLayer?.frame = bounds
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        imageLayer?.frame = bounds
+        playerLayer?.frame = bounds
+        gradientLayer.frame = bounds
+        CATransaction.commit()
     }
 }
 
-// MARK: - Mini Thumbnail
 class MiniThumbnail: NSView {
-    var imageView: NSImageView!
-    var video: PexelsVideo?
+    private let imageView = NSImageView()
+    private var imageURL: URL?
 
-    override init(frame: NSRect) {
-        super.init(frame: frame)
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
         setupUI()
     }
 
@@ -177,26 +231,29 @@ class MiniThumbnail: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func setupUI() {
+    private func setupUI() {
+        translatesAutoresizingMaskIntoConstraints = false
         wantsLayer = true
         layer?.cornerRadius = 8
         layer?.masksToBounds = true
-
-        imageView = NSImageView(frame: bounds)
-        imageView.imageScaling = .scaleProportionallyUpOrDown
+        layer?.backgroundColor = WallflowTheme.surface.cgColor
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.imageScaling = .scaleAxesIndependently
         addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            imageView.topAnchor.constraint(equalTo: topAnchor),
+            imageView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
     }
 
     func configure(with video: PexelsVideo) {
-        self.video = video
-        if let url = URL(string: video.image) {
-            URLSession.shared.dataTask(with: url) { data, _, _ in
-                if let data = data, let image = NSImage(data: data) {
-                    DispatchQueue.main.async {
-                        self.imageView.image = image
-                    }
-                }
-            }.resume()
+        guard let url = URL(string: video.image) else { return }
+        imageURL = url
+        ImageCache.shared.image(for: url) { image in
+            guard self.imageURL == url else { return }
+            self.imageView.image = image
         }
     }
 }

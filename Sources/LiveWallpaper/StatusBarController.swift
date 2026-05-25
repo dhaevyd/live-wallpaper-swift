@@ -5,91 +5,59 @@ class StatusBarController {
     var wallpaperController: WallpaperController
     var openMainWindow: () -> Void
 
-    init(
-        wallpaperController: WallpaperController,
-        openMainWindow: @escaping () -> Void
-    ) {
+    init(wallpaperController: WallpaperController, openMainWindow: @escaping () -> Void) {
         self.wallpaperController = wallpaperController
         self.openMainWindow = openMainWindow
         setupStatusBar()
     }
 
     func setupStatusBar() {
-        statusItem = NSStatusBar.system.statusItem(
-            withLength: NSStatusItem.variableLength
-        )
-
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
-            button.image = NSImage(
-                systemSymbolName: "play.rectangle.fill",
-                accessibilityDescription: "Live Wallpaper"
+            button.image = nil
+            let font = NSFont(name: "Cisnero", size: 18) ?? NSFont.systemFont(ofSize: 18, weight: .black)
+            button.attributedTitle = NSAttributedString(
+                string: "W",
+                attributes: [.font: font, .foregroundColor: WallflowTheme.accent]
             )
+            button.toolTip = "Wallflow"
         }
         updateMenu()
     }
 
     func updateMenu() {
         let menu = NSMenu()
+        menu.autoenablesItems = false
 
-        // Now playing
-        let playingItem = NSMenuItem(
-            title: "Now Playing: \(wallpaperController.currentVideoName)",
-            action: nil,
-            keyEquivalent: ""
-        )
+        let title = NSMenuItem(title: "Wallflow", action: nil, keyEquivalent: "")
+        title.isEnabled = false
+        menu.addItem(title)
+
+        let playingItem = NSMenuItem(title: "Now Playing: \(wallpaperController.currentVideoName)", action: nil, keyEquivalent: "")
         playingItem.isEnabled = false
         menu.addItem(playingItem)
+        menu.addItem(.separator())
 
-        menu.addItem(NSMenuItem.separator())
+        menu.addItem(item("Open Wallflow", #selector(openApp), "o"))
+        menu.addItem(item("Change Wallpaper", #selector(changeVideo), "v"))
+        menu.addItem(.separator())
 
-        // Open app
-        menu.addItem(NSMenuItem(
-            title: "Open LiveWallpaper",
-            action: #selector(openApp),
-            keyEquivalent: "o"
-        ).also { $0.target = self })
-
-        // Change video
-        menu.addItem(NSMenuItem(
-            title: "Change Video",
-            action: #selector(changeVideo),
-            keyEquivalent: "v"
-        ).also { $0.target = self })
-
-        menu.addItem(NSMenuItem.separator())
-
-        // Pause/Resume
         if wallpaperController.isPlaying {
-            menu.addItem(NSMenuItem(
-                title: "Pause",
-                action: #selector(pauseVideo),
-                keyEquivalent: "p"
-            ).also { $0.target = self })
+            menu.addItem(item("Pause", #selector(pauseVideo), "p"))
         } else {
-            menu.addItem(NSMenuItem(
-                title: "Resume",
-                action: #selector(resumeVideo),
-                keyEquivalent: "r"
-            ).also { $0.target = self })
+            menu.addItem(item("Resume", #selector(resumeVideo), "r"))
         }
-
-        // Stop
-        menu.addItem(NSMenuItem(
-            title: "Stop",
-            action: #selector(stopVideo),
-            keyEquivalent: "s"
-        ).also { $0.target = self })
-
-        menu.addItem(NSMenuItem.separator())
-
-        // Quit
-        menu.addItem(NSMenuItem(
-            title: "Quit",
-            action: #selector(quitApp),
-            keyEquivalent: "q"
-        ).also { $0.target = self })
-
+        menu.addItem(item("Stop", #selector(stopVideo), "s"))
+        menu.addItem(.separator())
+        menu.addItem(item("Quit Wallflow", #selector(quitApp), "q"))
         statusItem?.menu = menu
+    }
+
+    private func item(_ title: String, _ action: Selector, _ key: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        item.target = self
+        item.isEnabled = true
+        return item
     }
 
     @objc func openApp() {
@@ -119,13 +87,5 @@ class StatusBarController {
 
     @objc func quitApp() {
         NSApp.terminate(nil)
-    }
-}
-
-// Helper
-extension NSMenuItem {
-    func also(_ block: (NSMenuItem) -> Void) -> NSMenuItem {
-        block(self)
-        return self
     }
 }

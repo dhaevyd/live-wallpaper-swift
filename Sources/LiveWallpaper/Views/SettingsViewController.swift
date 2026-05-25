@@ -13,132 +13,111 @@ class SettingsViewController: NSViewController {
     }
 
     override func loadView() {
-        view = NSView(frame: NSRect(x: 0, y: 0, width: 900, height: 580))
+        view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor(
-            red: 0.08, green: 0.08, blue: 0.08, alpha: 1.0
-        ).cgColor
+        view.layer?.backgroundColor = WallflowTheme.background.cgColor
         setupUI()
     }
 
-    func setupUI() {
-        // Title
-        let title = NSTextField(labelWithString: "Settings")
-        title.font = NSFont.boldSystemFont(ofSize: 24)
-        title.textColor = .white
-        title.frame = NSRect(x: 40, y: 510, width: 200, height: 35)
-        view.addSubview(title)
+    private func setupUI() {
+        let stack = NSStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.orientation = .vertical
+        stack.spacing = 18
+        stack.edgeInsets = NSEdgeInsets(top: 28, left: 36, bottom: 28, right: 36)
+        view.addSubview(stack)
 
-        // Divider
-        let divider = NSBox()
-        divider.boxType = .separator
-        divider.frame = NSRect(x: 0, y: 498, width: 900, height: 1)
-        view.addSubview(divider)
+        let title = WallflowTheme.label("SETTINGS", size: 24, weight: .black, color: .white, tracking: 2)
+        stack.addArrangedSubview(title)
 
-        // Settings sections
-        addSection(
-            title: "Playback",
-            y: 440
-        )
+        addSection(title: "PLAYBACK", to: stack)
+        addToggle(title: "Launch at Login", subtitle: "Start Wallflow when you log in", key: "launchAtLogin", to: stack)
+        addToggle(title: "Loop Video", subtitle: "Continuously loop the wallpaper video", key: "loopVideo", defaultValue: true, to: stack)
+        addToggle(title: "Mute Audio", subtitle: "Play wallpaper video without sound", key: "muteAudio", defaultValue: true, to: stack)
 
-        // Launch at login
-        addToggle(
-            title: "Launch at Login",
-            subtitle: "Start LiveWall when you log in",
-            key: "launchAtLogin",
-            y: 390
-        )
+        addSection(title: "DISPLAY", to: stack)
+        addToggle(title: "Same Video on All Screens", subtitle: "Use the same wallpaper on every connected display", key: "sameVideoAllScreens", defaultValue: true, to: stack)
 
-        // Loop video
-        addToggle(
-            title: "Loop Video",
-            subtitle: "Continuously loop the wallpaper video",
-            key: "loopVideo",
-            y: 340,
-            defaultValue: true
-        )
+        addSection(title: "ABOUT", to: stack)
+        let about = WallflowTheme.label("Wallflow v2.0", size: 12, weight: .regular, color: WallflowTheme.textSecondary)
+        stack.addArrangedSubview(about)
 
-        // Mute audio
-        addToggle(
-            title: "Mute Audio",
-            subtitle: "Play wallpaper video without sound",
-            key: "muteAudio",
-            y: 290,
-            defaultValue: true
-        )
+        let spacer = NSView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        stack.addArrangedSubview(spacer)
 
-        addSection(title: "Display", y: 240)
-
-        // Same video all screens
-        addToggle(
-            title: "Same Video on All Screens",
-            subtitle: "Use the same wallpaper on all connected displays",
-            key: "sameVideoAllScreens",
-            y: 190,
-            defaultValue: true
-        )
-
-        addSection(title: "About", y: 140)
-
-        // Version
-        let version = NSTextField(
-            labelWithString: "LiveWall v1.0  •  Made with ❤️"
-        )
-        version.font = NSFont.systemFont(ofSize: 12)
-        version.textColor = .lightGray
-        version.frame = NSRect(x: 40, y: 100, width: 400, height: 20)
-        view.addSubview(version)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: view.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            spacer.heightAnchor.constraint(greaterThanOrEqualToConstant: 1)
+        ])
     }
 
-    func addSection(title: String, y: CGFloat) {
-        let label = NSTextField(labelWithString: title.uppercased())
-        label.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
-        label.textColor = NSColor.lightGray
-        label.frame = NSRect(x: 40, y: y, width: 200, height: 20)
-        view.addSubview(label)
-
-        let divider = NSBox()
-        divider.boxType = .separator
-        divider.frame = NSRect(x: 40, y: y - 5, width: 820, height: 1)
-        view.addSubview(divider)
+    private func addSection(title: String, to stack: NSStackView) {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        let label = WallflowTheme.label(title, size: 10, weight: .bold, color: WallflowTheme.accent, tracking: 2.6)
+        let separator = NSView()
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        separator.wantsLayer = true
+        separator.layer?.backgroundColor = WallflowTheme.accent.withAlphaComponent(0.28).cgColor
+        container.addSubview(label)
+        container.addSubview(separator)
+        stack.addArrangedSubview(container)
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalToConstant: 28),
+            label.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            label.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            separator.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 14),
+            separator.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            separator.centerYAnchor.constraint(equalTo: label.centerYAnchor),
+            separator.heightAnchor.constraint(equalToConstant: 1)
+        ])
     }
 
-    func addToggle(
-        title: String,
-        subtitle: String,
-        key: String,
-        y: CGFloat,
-        defaultValue: Bool = false
-    ) {
-        let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
-        titleLabel.textColor = .white
-        titleLabel.frame = NSRect(x: 40, y: y + 18, width: 600, height: 20)
-        view.addSubview(titleLabel)
+    private func addToggle(title: String, subtitle: String, key: String, defaultValue: Bool = false, to stack: NSStackView) {
+        let row = NSView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.wantsLayer = true
+        row.layer?.backgroundColor = WallflowTheme.surface.cgColor
+        row.layer?.cornerRadius = 8
+        row.layer?.borderColor = WallflowTheme.border.cgColor
+        row.layer?.borderWidth = 1
 
-        let subtitleLabel = NSTextField(labelWithString: subtitle)
-        subtitleLabel.font = NSFont.systemFont(ofSize: 11)
-        subtitleLabel.textColor = .lightGray
-        subtitleLabel.frame = NSRect(x: 40, y: y, width: 600, height: 18)
-        view.addSubview(subtitleLabel)
-
-        let toggle = NSSwitch(
-            frame: NSRect(x: 820, y: y + 10, width: 50, height: 30)
-        )
-        toggle.state = UserDefaults.standard.bool(forKey: key)
-            ? .on
-            : (defaultValue ? .on : .off)
+        let titleLabel = WallflowTheme.label(title, size: 14, weight: .medium, color: .white)
+        let subtitleLabel = WallflowTheme.label(subtitle, size: 11, weight: .regular, color: WallflowTheme.textSecondary)
+        let toggle = AmberSwitch()
+        toggle.translatesAutoresizingMaskIntoConstraints = false
+        toggle.state = UserDefaults.standard.object(forKey: key) == nil
+            ? (defaultValue ? .on : .off)
+            : (UserDefaults.standard.bool(forKey: key) ? .on : .off)
         toggle.action = #selector(toggleChanged(_:))
         toggle.target = self
         toggle.identifier = NSUserInterfaceItemIdentifier(key)
-        view.addSubview(toggle)
+
+        row.addSubview(titleLabel)
+        row.addSubview(subtitleLabel)
+        row.addSubview(toggle)
+        stack.addArrangedSubview(row)
+
+        NSLayoutConstraint.activate([
+            row.heightAnchor.constraint(equalToConstant: 64),
+            titleLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
+            titleLabel.topAnchor.constraint(equalTo: row.topAnchor, constant: 13),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: toggle.leadingAnchor, constant: -16),
+            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            subtitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: toggle.leadingAnchor, constant: -16),
+            toggle.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -16),
+            toggle.centerYAnchor.constraint(equalTo: row.centerYAnchor)
+        ])
     }
 
     @objc func toggleChanged(_ sender: NSSwitch) {
         guard let key = sender.identifier?.rawValue else { return }
         UserDefaults.standard.set(sender.state == .on, forKey: key)
-
-        // Apply settings
         switch key {
         case "muteAudio":
             wallpaperController.setMuted(sender.state == .on)
@@ -147,5 +126,28 @@ class SettingsViewController: NSViewController {
         default:
             break
         }
+    }
+}
+
+class AmberSwitch: NSSwitch {
+    override var state: NSControl.StateValue {
+        didSet { updateTint() }
+    }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        updateTint()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        wantsLayer = true
+        updateTint()
+    }
+
+    private func updateTint() {
+        layer?.backgroundColor = state == .on ? WallflowTheme.accent.withAlphaComponent(0.45).cgColor : NSColor.white.withAlphaComponent(0.12).cgColor
+        layer?.cornerRadius = 10
     }
 }
