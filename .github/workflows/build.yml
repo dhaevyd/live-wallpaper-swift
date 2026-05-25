@@ -1,0 +1,81 @@
+name: Build Mac Swift App
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Xcode Project
+        run: |
+          mkdir -p LiveWallpaper.xcodeproj
+          cat > LiveWallpaper.xcodeproj/project.pbxproj << 'EOF'
+          // Xcode project file will be generated
+          EOF
+
+      - name: Build Swift App
+        run: |
+          swiftc \
+            Sources/LiveWallpaper/main.swift \
+            Sources/LiveWallpaper/AppDelegate.swift \
+            Sources/LiveWallpaper/WallpaperWindow.swift \
+            Sources/LiveWallpaper/ControlWindow.swift \
+            -o LiveWallpaper \
+            -framework Cocoa \
+            -framework AVFoundation \
+            -framework AVKit
+
+      - name: Create .app Bundle
+        run: |
+          mkdir -p LiveWallpaper.app/Contents/MacOS
+          mkdir -p LiveWallpaper.app/Contents/Resources
+          
+          # Move binary
+          mv LiveWallpaper LiveWallpaper.app/Contents/MacOS/
+
+          # Create Info.plist
+          cat > LiveWallpaper.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>LiveWallpaper</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.livewallpaper.app</string>
+              <key>CFBundleName</key>
+              <string>LiveWallpaper</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>11.0</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>NSPrincipalClass</key>
+              <string>NSApplication</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Zip .app
+        run: |
+          zip -r LiveWallpaper.zip LiveWallpaper.app
+
+      - name: Upload .app
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiveWallpaper
+          path: LiveWallpaper.zip
