@@ -1,6 +1,5 @@
 import Cocoa
 
-@main
 class AppDelegate: NSObject, NSApplicationDelegate {
     var wallpaperWindow: WallpaperWindow?
     var controlWindow: ControlWindow?
