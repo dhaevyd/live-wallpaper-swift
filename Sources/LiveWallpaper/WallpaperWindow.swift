@@ -1,16 +1,15 @@
 import Cocoa
 import AVFoundation
-import AVKit
 
 class WallpaperWindow: NSWindow {
     var player: AVPlayer?
     var playerLayer: AVPlayerLayer?
+    var targetScreen: NSScreen
 
-    init() {
-        // Full screen size
-        let screen = NSScreen.main!.frame
+    init(screen: NSScreen) {
+        self.targetScreen = screen
         super.init(
-            contentRect: screen,
+            contentRect: screen.frame,
             styleMask: .borderless,
             backing: .buffered,
             defer: false
@@ -19,7 +18,7 @@ class WallpaperWindow: NSWindow {
     }
 
     func setupWindow() {
-        // Push window behind desktop icons
+        // Push behind desktop icons
         self.level = NSWindow.Level(
             rawValue: Int(CGWindowLevelForKey(.desktopWindow))
         )
@@ -31,19 +30,17 @@ class WallpaperWindow: NSWindow {
         self.isOpaque = true
         self.hasShadow = false
         self.backgroundColor = .black
+        self.ignoresMouseEvents = true
     }
 
     func playVideo(url: URL) {
-        // Remove old player if exists
         playerLayer?.removeFromSuperlayer()
 
-        // Setup AVPlayer
         player = AVPlayer(url: url)
         playerLayer = AVPlayerLayer(player: player!)
         playerLayer!.frame = self.contentView!.bounds
         playerLayer!.videoGravity = .resizeAspectFill
 
-        // Add to window
         self.contentView?.wantsLayer = true
         self.contentView?.layer?.addSublayer(playerLayer!)
 
@@ -64,5 +61,15 @@ class WallpaperWindow: NSWindow {
     func stopVideo() {
         player?.pause()
         playerLayer?.removeFromSuperlayer()
+        player = nil
+        self.orderOut(nil)
+    }
+
+    func pauseVideo() {
+        player?.pause()
+    }
+
+    func resumeVideo() {
+        player?.play()
     }
 }
