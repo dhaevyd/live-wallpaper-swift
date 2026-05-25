@@ -29,6 +29,7 @@ jobs:
             Sources/LiveWallpaper/StatusBarController.swift \
             Sources/LiveWallpaper/WallpaperController.swift \
             Sources/LiveWallpaper/WallpaperWindow.swift \
+<<<<<<< HEAD
             Sources/LiveWallpaper/Network/PexelsAPI.swift \
             Sources/LiveWallpaper/Network/VideoDownloader.swift \
             Sources/LiveWallpaper/Models/Video.swift \
@@ -41,13 +42,21 @@ jobs:
             Sources/LiveWallpaper/Views/Components/NavBar.swift \
             Sources/LiveWallpaper/Views/Components/HeroView.swift \
             Sources/LiveWallpaper/Views/Components/VideoCardView.swift \
+=======
+            Sources/LiveWallpaper/MainWindowController.swift \
+            Sources/LiveWallpaper/VideoGridViewController.swift \
+            Sources/LiveWallpaper/VideoThumbnailItem.swift \
+>>>>>>> 9db167e02c9263e86a3bc5568df9de03a1da5f2b
             -target x86_64-apple-macosx11.0 \
             -framework Cocoa \
             -framework AVFoundation \
             -framework AVKit \
             -o LiveWallpaper 2>&1
+<<<<<<< HEAD
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+=======
+>>>>>>> 9db167e02c9263e86a3bc5568df9de03a1da5f2b
 
       - name: Check binary exists
         run: |
