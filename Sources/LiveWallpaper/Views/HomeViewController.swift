@@ -29,7 +29,6 @@ class HomeViewController: NSViewController {
     }
 
     func setupUI() {
-        // Hero view top half
         heroView = HeroView(
             frame: NSRect(x: 0, y: 300, width: 900, height: 280)
         )
@@ -38,7 +37,6 @@ class HomeViewController: NSViewController {
         }
         view.addSubview(heroView)
 
-        // Section title
         sectionTitle = NSTextField(
             labelWithString: "✦  Curated Picks"
         )
@@ -47,7 +45,6 @@ class HomeViewController: NSViewController {
         sectionTitle.frame = NSRect(x: 20, y: 265, width: 300, height: 25)
         view.addSubview(sectionTitle)
 
-        // Cards scroll view
         cardsContainer = NSView(
             frame: NSRect(x: 0, y: 0, width: 3000, height: 240)
         )
@@ -62,7 +59,6 @@ class HomeViewController: NSViewController {
         scrollView.horizontalScroller?.alphaValue = 0
         view.addSubview(scrollView)
 
-        // Loading indicator
         loadingIndicator = NSProgressIndicator(
             frame: NSRect(x: 430, y: 400, width: 40, height: 40)
         )
@@ -92,13 +88,11 @@ class HomeViewController: NSViewController {
     func updateUI(with videos: [PexelsVideo]) {
         guard !videos.isEmpty else { return }
 
-        // Set hero to first video
         heroView.configure(
             with: videos[0],
             related: Array(videos.prefix(8))
         )
 
-        // Populate cards
         cardsContainer.subviews.forEach { $0.removeFromSuperview() }
 
         var x: CGFloat = 20
@@ -122,24 +116,16 @@ class HomeViewController: NSViewController {
     }
 
     func setAsWallpaper(video: PexelsVideo) {
-        // Show download progress
-        let alert = NSAlert()
-        alert.messageText = "Downloading..."
-        alert.informativeText = "Please wait while we download your wallpaper"
-        alert.addButton(withTitle: "Cancel")
-        alert.beginSheetModal(for: view.window!) { _ in
-            VideoDownloader.shared.cancelDownload(video: video)
-        }
-
         VideoDownloader.shared.download(
             video: video,
-            progress: { progress in
-                print("Progress: \(progress)")
-            }
+            progress: { _ in }
         ) { result in
-            // Dismiss alert
-            self.view.window?.endSheet(
-                self.view.window!.sheets.first ?? NSWindow()
-            )
-
             switch result {
+            case .success(let url):
+                self.wallpaperController.playVideo(url: url)
+            case .failure(let error):
+                print("Download error: \(error)")
+            }
+        }
+    }
+}
