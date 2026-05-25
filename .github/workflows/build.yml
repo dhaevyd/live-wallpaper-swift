@@ -26,9 +26,12 @@ jobs:
           swiftc \
             Sources/LiveWallpaper/main.swift \
             Sources/LiveWallpaper/AppDelegate.swift \
+            Sources/LiveWallpaper/StatusBarController.swift \
+            Sources/LiveWallpaper/WallpaperController.swift \
             Sources/LiveWallpaper/WallpaperWindow.swift \
-            Sources/LiveWallpaper/ControlWindow.swift \
-            -o LiveWallpaper \
+            Sources/LiveWallpaper/MainWindowController.swift \
+            Sources/LiveWallpaper/VideoGridViewController.swift \
+            Sources/LiveWallpaper/VideoThumbnailItem.swift \
             -target x86_64-apple-macosx11.0 \
             -framework Cocoa \
             -framework AVFoundation \
@@ -38,7 +41,7 @@ jobs:
         run: |
           mkdir -p LiveWallpaper.app/Contents/MacOS
           mkdir -p LiveWallpaper.app/Contents/Resources
-          
+
           # Move binary
           mv LiveWallpaper LiveWallpaper.app/Contents/MacOS/
 
