@@ -1,5 +1,25 @@
 import Foundation
 
+enum PexelsAPIError: LocalizedError {
+    case missingAPIKey
+    case invalidURL
+    case noData
+    case httpStatus(Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingAPIKey:
+            return "PEXELS_API_KEY is missing."
+        case .invalidURL:
+            return "The Pexels request URL is invalid."
+        case .noData:
+            return "Pexels returned no response data."
+        case .httpStatus(let status):
+            return "Pexels returned HTTP status \(status)."
+        }
+    }
+}
+
 class PexelsAPI {
     static let shared = PexelsAPI()
 
@@ -71,7 +91,19 @@ class PexelsAPI {
             URLQueryItem(name: $0.key, value: $0.value)
         }
 
-        guard let url = components.url else { return }
+        guard !apiKey.isEmpty else {
+            DispatchQueue.main.async {
+                completion(.failure(PexelsAPIError.missingAPIKey))
+            }
+            return
+        }
+
+        guard let url = components.url else {
+            DispatchQueue.main.async {
+                completion(.failure(PexelsAPIError.invalidURL))
+            }
+            return
+        }
 
         var request = URLRequest(url: url)
         request.setValue(apiKey, forHTTPHeaderField: "Authorization")
@@ -85,7 +117,20 @@ class PexelsAPI {
                 return
             }
 
-            guard let data = data else { return }
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200...299).contains(httpResponse.statusCode) {
+                DispatchQueue.main.async {
+                    completion(.failure(PexelsAPIError.httpStatus(httpResponse.statusCode)))
+                }
+                return
+            }
+
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    completion(.failure(PexelsAPIError.noData))
+                }
+                return
+            }
 
             do {
                 let response = try JSONDecoder().decode(

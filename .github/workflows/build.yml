@@ -36,6 +36,7 @@ jobs:
             Sources/LiveWallpaper/main.swift \
             Sources/LiveWallpaper/AppDelegate.swift \
             Sources/LiveWallpaper/AppConfig.swift \
+            Sources/LiveWallpaper/WallflowAssets.swift \
             Sources/LiveWallpaper/StatusBarController.swift \
             Sources/LiveWallpaper/WallpaperController.swift \
             Sources/LiveWallpaper/WallpaperWindow.swift \
@@ -67,6 +68,20 @@ jobs:
         run: |
           mkdir -p Wallflow.app/Contents/MacOS
           mkdir -p Wallflow.app/Contents/Resources
+          cp Images/Wallflow.png Wallflow.app/Contents/Resources/Wallflow.png
+          cp "Images/Wallflow Logo.png" "Wallflow.app/Contents/Resources/Wallflow Logo.png"
+          mkdir -p Wallflow.iconset
+          sips -z 16 16 Images/Wallflow.png --out Wallflow.iconset/icon_16x16.png
+          sips -z 32 32 Images/Wallflow.png --out Wallflow.iconset/icon_16x16@2x.png
+          sips -z 32 32 Images/Wallflow.png --out Wallflow.iconset/icon_32x32.png
+          sips -z 64 64 Images/Wallflow.png --out Wallflow.iconset/icon_32x32@2x.png
+          sips -z 128 128 Images/Wallflow.png --out Wallflow.iconset/icon_128x128.png
+          sips -z 256 256 Images/Wallflow.png --out Wallflow.iconset/icon_128x128@2x.png
+          sips -z 256 256 Images/Wallflow.png --out Wallflow.iconset/icon_256x256.png
+          sips -z 512 512 Images/Wallflow.png --out Wallflow.iconset/icon_256x256@2x.png
+          sips -z 512 512 Images/Wallflow.png --out Wallflow.iconset/icon_512x512.png
+          sips -z 1024 1024 Images/Wallflow.png --out Wallflow.iconset/icon_512x512@2x.png
+          iconutil -c icns Wallflow.iconset -o Wallflow.app/Contents/Resources/Wallflow.icns
           mv Wallflow Wallflow.app/Contents/MacOS/
           cat > Wallflow.app/Contents/Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
@@ -79,6 +94,8 @@ jobs:
               <key>CFBundleIdentifier</key>
               <string>com.livewallpaper.app</string>
               <key>CFBundleName</key>
+              <string>Wallflow</string>
+              <key>CFBundleIconFile</key>
               <string>Wallflow</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>

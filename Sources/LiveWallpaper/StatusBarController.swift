@@ -14,12 +14,19 @@ class StatusBarController {
     func setupStatusBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
-            button.image = nil
-            let font = NSFont(name: "Cisnero", size: 18) ?? NSFont.systemFont(ofSize: 18, weight: .black)
-            button.attributedTitle = NSAttributedString(
-                string: "W",
-                attributes: [.font: font, .foregroundColor: WallflowTheme.accent]
-            )
+            if let image = WallflowAssets.statusBarIcon {
+                image.size = NSSize(width: 18, height: 18)
+                image.isTemplate = false
+                button.image = image
+                button.title = ""
+                statusItem?.length = 28
+            } else {
+                let font = NSFont(name: "Cisnero", size: 18) ?? NSFont.systemFont(ofSize: 18, weight: .black)
+                button.attributedTitle = NSAttributedString(
+                    string: "W",
+                    attributes: [.font: font, .foregroundColor: WallflowTheme.accent]
+                )
+            }
             button.toolTip = "Wallflow"
         }
         updateMenu()

@@ -7,6 +7,7 @@ class LibraryViewController: NSViewController {
     var currentFolder: URL
 
     private var collectionView: NSCollectionView!
+    private var collectionLayout: NSCollectionViewFlowLayout!
     private let folderLabel = WallflowTheme.label("", size: 11, weight: .regular, color: WallflowTheme.textSecondary)
     private let countLabel = WallflowTheme.label("0 VIDEOS", size: 11, weight: .bold, color: WallflowTheme.textSecondary, tracking: 2)
     private var emptyView: NSView?
@@ -63,17 +64,17 @@ class LibraryViewController: NSViewController {
         separator.layer?.backgroundColor = WallflowTheme.accent.withAlphaComponent(0.35).cgColor
         view.addSubview(separator)
 
-        let layout = NSCollectionViewFlowLayout()
-        layout.itemSize = NSSize(width: 220, height: 164)
-        layout.minimumInteritemSpacing = 16
-        layout.minimumLineSpacing = 18
-        layout.sectionInset = NSEdgeInsets(top: 18, left: 24, bottom: 24, right: 24)
+        collectionLayout = NSCollectionViewFlowLayout()
+        collectionLayout.minimumInteritemSpacing = 16
+        collectionLayout.minimumLineSpacing = 18
+        collectionLayout.sectionInset = NSEdgeInsets(top: 18, left: 24, bottom: 24, right: 24)
 
         collectionView = NSCollectionView()
-        collectionView.collectionViewLayout = layout
+        collectionView.collectionViewLayout = collectionLayout
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.backgroundColors = [.clear]
+        collectionView.autoresizingMask = [.width]
         collectionView.register(LibraryVideoItem.self, forItemWithIdentifier: LibraryVideoItem.identifier)
 
         let scrollView = NSScrollView()
@@ -114,6 +115,22 @@ class LibraryViewController: NSViewController {
             scrollView.topAnchor.constraint(equalTo: separator.bottomAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+
+        let state = EmptyLibraryView()
+        state.isHidden = true
+        emptyView = state
+        view.addSubview(state)
+        NSLayoutConstraint.activate([
+            state.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            state.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            state.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -48)
+        ])
+    }
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        updateCollectionLayout(for: collectionView?.bounds.width ?? view.bounds.width)
+        collectionLayout?.invalidateLayout()
     }
 
     func loadVideos() {
@@ -122,21 +139,21 @@ class LibraryViewController: NSViewController {
         videoURLs = files.filter { extensions.contains($0.pathExtension.lowercased()) }.sorted { $0.lastPathComponent < $1.lastPathComponent }
         folderLabel.stringValue = currentFolder.path
         countLabel.stringValue = "\(videoURLs.count) VIDEOS"
+        collectionView?.isHidden = videoURLs.isEmpty
+        emptyView?.isHidden = !videoURLs.isEmpty
+        updateCollectionLayout(for: collectionView?.bounds.width ?? view.bounds.width)
         collectionView?.reloadData()
-        updateEmptyState()
+        collectionLayout?.invalidateLayout()
     }
 
-    private func updateEmptyState() {
-        emptyView?.removeFromSuperview()
-        guard videoURLs.isEmpty else { return }
-        let state = EmptyLibraryView()
-        emptyView = state
-        view.addSubview(state)
-        NSLayoutConstraint.activate([
-            state.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            state.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            state.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -48)
-        ])
+    private func updateCollectionLayout(for width: CGFloat) {
+        guard width > 0 else { return }
+        let insets = collectionLayout.sectionInset.left + collectionLayout.sectionInset.right
+        let available = max(240, width - insets)
+        let columns = max(1, min(4, Int((available + collectionLayout.minimumInteritemSpacing) / 236)))
+        let spacing = CGFloat(columns - 1) * collectionLayout.minimumInteritemSpacing
+        let itemWidth = floor((available - spacing) / CGFloat(columns))
+        collectionLayout.itemSize = NSSize(width: itemWidth, height: floor(itemWidth * 0.62) + 34)
     }
 
     @objc func changeFolder() {
@@ -170,8 +187,8 @@ extension LibraryViewController: NSCollectionViewDataSource, NSCollectionViewDel
     }
 
     func collectionView(_ collectionView: NSCollectionView, layout collectionViewLayout: NSCollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> NSSize {
-        let width = max(190, floor((collectionView.bounds.width - 80) / 3))
-        return NSSize(width: width, height: 164)
+        updateCollectionLayout(for: collectionView.bounds.width)
+        return collectionLayout.itemSize
     }
 }
 
@@ -204,7 +221,7 @@ class LibraryVideoItem: NSCollectionViewItem {
     private func setupUI() {
         thumbnailView.translatesAutoresizingMaskIntoConstraints = false
         thumbnailView.wantsLayer = true
-        thumbnailView.imageScaling = .scaleAxesIndependently
+        thumbnailView.imageScaling = .scaleProportionallyUpOrDown
         view.addSubview(thumbnailView)
 
         titleLabel.lineBreakMode = .byTruncatingTail

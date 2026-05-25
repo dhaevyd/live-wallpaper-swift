@@ -74,7 +74,13 @@ class SidebarView: NSView {
         layer?.borderColor = WallflowTheme.border.cgColor
         layer?.borderWidth = 1
 
-        let logo = GradientLogoView()
+        let logo = NSImageView()
+        logo.translatesAutoresizingMaskIntoConstraints = false
+        logo.image = WallflowAssets.appIcon
+        logo.imageScaling = .scaleProportionallyUpOrDown
+        logo.wantsLayer = true
+        logo.layer?.cornerRadius = 8
+        logo.layer?.masksToBounds = true
         addSubview(logo)
 
         let stack = NSStackView()

@@ -12,6 +12,7 @@ swiftc \
   Sources/LiveWallpaper/main.swift \
   Sources/LiveWallpaper/AppDelegate.swift \
   Sources/LiveWallpaper/AppConfig.swift \
+  Sources/LiveWallpaper/WallflowAssets.swift \
   Sources/LiveWallpaper/StatusBarController.swift \
   Sources/LiveWallpaper/WallpaperController.swift \
   Sources/LiveWallpaper/WallpaperWindow.swift \
@@ -35,7 +36,7 @@ swiftc \
   -o Wallflow
 ```
 
-The CI workflow (`.github/workflows/build.yml`) runs the same command on `push` to `main` and uploads a zipped `.app` bundle as an artifact.
+The CI workflow (`.github/workflows/build.yml`) runs the same command on `push` to `main`, copies the Wallflow PNG resources, generates `Wallflow.icns`, and uploads a zipped `.app` bundle as an artifact.
 
 **API key:** Local runs can use the `PEXELS_API_KEY` environment variable. GitHub Actions generates `Sources/LiveWallpaper/AppConfig.swift` from the repository secret before compiling, so the distributed app has the key baked into the binary.
 
@@ -53,7 +54,7 @@ The app runs as an `.accessory` activation policy (no Dock icon) with a menu bar
 
 **Main window:**
 
-- `MainWindowController` (900×640, dark background) hosts a left `SidebarView` and a flexible content area.
+- `MainWindowController` (resizable, 720×520 minimum, dark background) hosts a left `SidebarView` and a flexible content area.
 - Four tabs: Home, Explore, Library, Settings — each backed by a dedicated `NSViewController`.
 - The Library tab calls `loadVideos()` on every tab switch to reflect newly downloaded files.
 

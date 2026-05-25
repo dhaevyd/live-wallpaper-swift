@@ -27,8 +27,25 @@ class SettingsViewController: NSViewController {
         stack.edgeInsets = NSEdgeInsets(top: 28, left: 36, bottom: 28, right: 36)
         view.addSubview(stack)
 
+        let header = NSView()
+        header.translatesAutoresizingMaskIntoConstraints = false
+        let logo = NSImageView()
+        logo.translatesAutoresizingMaskIntoConstraints = false
+        logo.image = WallflowAssets.wordmark
+        logo.imageScaling = .scaleProportionallyUpOrDown
         let title = WallflowTheme.label("SETTINGS", size: 24, weight: .black, color: .white, tracking: 2)
-        stack.addArrangedSubview(title)
+        header.addSubview(logo)
+        header.addSubview(title)
+        stack.addArrangedSubview(header)
+        NSLayoutConstraint.activate([
+            header.heightAnchor.constraint(equalToConstant: 58),
+            logo.leadingAnchor.constraint(equalTo: header.leadingAnchor),
+            logo.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            logo.widthAnchor.constraint(equalToConstant: 96),
+            logo.heightAnchor.constraint(equalToConstant: 44),
+            title.leadingAnchor.constraint(equalTo: logo.trailingAnchor, constant: 18),
+            title.centerYAnchor.constraint(equalTo: header.centerYAnchor)
+        ])
 
         addSection(title: "PLAYBACK", to: stack)
         addToggle(title: "Launch at Login", subtitle: "Start Wallflow when you log in", key: "launchAtLogin", to: stack)

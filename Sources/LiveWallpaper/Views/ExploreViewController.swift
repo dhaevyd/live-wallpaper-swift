@@ -7,6 +7,7 @@ class ExploreViewController: NSViewController {
     private let chipsStack = NSStackView()
     private let resultsLabel = WallflowTheme.label("RESULTS / 0", size: 11, weight: .bold, color: WallflowTheme.textSecondary, tracking: 2.2)
     private var collectionView: NSCollectionView!
+    private var collectionLayout: NSCollectionViewFlowLayout!
     private let loadingIndicator = NSProgressIndicator()
     private var errorView: NSView?
     private var toastView: NSView?
@@ -71,18 +72,18 @@ class ExploreViewController: NSViewController {
 
         stack.addArrangedSubview(resultsLabel)
 
-        let layout = NSCollectionViewFlowLayout()
-        layout.itemSize = NSSize(width: 180, height: 132)
-        layout.minimumInteritemSpacing = 14
-        layout.minimumLineSpacing = 14
-        layout.sectionInset = NSEdgeInsets(top: 0, left: 0, bottom: 24, right: 0)
+        collectionLayout = NSCollectionViewFlowLayout()
+        collectionLayout.minimumInteritemSpacing = 14
+        collectionLayout.minimumLineSpacing = 14
+        collectionLayout.sectionInset = NSEdgeInsets(top: 0, left: 0, bottom: 24, right: 0)
 
         collectionView = NSCollectionView()
         collectionView.translatesAutoresizingMaskIntoConstraints = false
-        collectionView.collectionViewLayout = layout
+        collectionView.collectionViewLayout = collectionLayout
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.backgroundColors = [.clear]
+        collectionView.autoresizingMask = [.width]
         collectionView.register(ExploreVideoItem.self, forItemWithIdentifier: ExploreVideoItem.identifier)
 
         let scrollView = NSScrollView()
@@ -116,6 +117,12 @@ class ExploreViewController: NSViewController {
         ])
     }
 
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        updateCollectionLayout(for: collectionView?.bounds.width ?? view.bounds.width)
+        collectionLayout?.invalidateLayout()
+    }
+
     func loadCategory(_ category: Category) {
         currentCategory = category
         chipButtons.forEach { $0.setActive($0.category.name == category.name) }
@@ -136,6 +143,14 @@ class ExploreViewController: NSViewController {
 
     private func performFetch(retry: @escaping () -> Void, fetch: (@escaping (Result<[PexelsVideo], Error>) -> Void) -> Void) {
         errorView?.removeFromSuperview()
+        errorView = nil
+        guard PexelsAPI.hasAPIKey else {
+            videos = []
+            resultsLabel.stringValue = "RESULTS / 0"
+            collectionView.reloadData()
+            showError(title: "PEXELS API KEY REQUIRED", message: "Build Wallflow through GitHub Actions with PEXELS_API_KEY configured, or set it in the local launch environment.", retry: retry)
+            return
+        }
         loadingIndicator.isHidden = false
         loadingIndicator.startAnimation(nil)
         fetch { [weak self] result in
@@ -144,13 +159,27 @@ class ExploreViewController: NSViewController {
             self.loadingIndicator.isHidden = true
             switch result {
             case .success(let videos):
+                self.errorView?.removeFromSuperview()
+                self.errorView = nil
                 self.videos = videos
                 self.resultsLabel.stringValue = "RESULTS / \(videos.count)"
+                self.updateCollectionLayout(for: self.collectionView.bounds.width)
                 self.collectionView.reloadData()
+                self.collectionLayout.invalidateLayout()
             case .failure(let error):
                 self.showError(title: "FETCH FAILED", message: error.localizedDescription, retry: retry)
             }
         }
+    }
+
+    private func updateCollectionLayout(for width: CGFloat) {
+        guard width > 0 else { return }
+        let insets = collectionLayout.sectionInset.left + collectionLayout.sectionInset.right
+        let available = max(180, width - insets)
+        let columns = max(1, min(5, Int((available + collectionLayout.minimumInteritemSpacing) / 180)))
+        let spacing = CGFloat(columns - 1) * collectionLayout.minimumInteritemSpacing
+        let itemWidth = floor((available - spacing) / CGFloat(columns))
+        collectionLayout.itemSize = NSSize(width: itemWidth, height: floor(itemWidth * 0.62))
     }
 
     @objc private func chipPressed(_ sender: CategoryChipButton) {
@@ -217,8 +246,8 @@ extension ExploreViewController: NSCollectionViewDataSource, NSCollectionViewDel
     }
 
     func collectionView(_ collectionView: NSCollectionView, layout collectionViewLayout: NSCollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> NSSize {
-        let width = max(160, floor((collectionView.bounds.width - 42) / 4))
-        return NSSize(width: width, height: 132)
+        updateCollectionLayout(for: collectionView.bounds.width)
+        return collectionLayout.itemSize
     }
 }
 

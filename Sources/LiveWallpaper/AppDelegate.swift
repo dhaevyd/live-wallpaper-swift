@@ -6,6 +6,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var mainWindowController: MainWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.applicationIconImage = WallflowAssets.appIcon
+
         // Create default wallpaper folder
         createDefaultFolder()
 

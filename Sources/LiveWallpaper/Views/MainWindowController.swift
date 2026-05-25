@@ -26,7 +26,7 @@ class MainWindowController: NSWindowController, SidebarViewDelegate, NSWindowDel
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
         window.backgroundColor = WallflowTheme.background
-        window.minSize = NSSize(width: 900, height: 640)
+        window.minSize = NSSize(width: 720, height: 520)
 
         super.init(window: window)
         window.delegate = self
