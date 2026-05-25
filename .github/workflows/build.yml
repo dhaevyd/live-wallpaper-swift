@@ -18,9 +18,24 @@ jobs:
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          key = os.environ.get("PEXELS_API_KEY", "")
+          Path("Sources/LiveWallpaper/AppConfig.swift").write_text(
+              "import Foundation\n\n"
+              "enum AppConfig {\n"
+              f"    static let bakedPexelsAPIKey = {json.dumps(key)}\n"
+              "}\n"
+          )
+          PY
+
           swiftc \
             Sources/LiveWallpaper/main.swift \
             Sources/LiveWallpaper/AppDelegate.swift \
+            Sources/LiveWallpaper/AppConfig.swift \
             Sources/LiveWallpaper/StatusBarController.swift \
             Sources/LiveWallpaper/WallpaperController.swift \
             Sources/LiveWallpaper/WallpaperWindow.swift \

@@ -11,6 +11,7 @@ This is a pure Swift macOS app built with `swiftc` directly — no Xcode project
 swiftc \
   Sources/LiveWallpaper/main.swift \
   Sources/LiveWallpaper/AppDelegate.swift \
+  Sources/LiveWallpaper/AppConfig.swift \
   Sources/LiveWallpaper/StatusBarController.swift \
   Sources/LiveWallpaper/WallpaperController.swift \
   Sources/LiveWallpaper/WallpaperWindow.swift \
@@ -36,7 +37,7 @@ swiftc \
 
 The CI workflow (`.github/workflows/build.yml`) runs the same command on `push` to `main` and uploads a zipped `.app` bundle as an artifact.
 
-**Runtime requirement:** The `PEXELS_API_KEY` environment variable must be set for API calls to work. In CI it comes from repository secrets.
+**API key:** Local runs can use the `PEXELS_API_KEY` environment variable. GitHub Actions generates `Sources/LiveWallpaper/AppConfig.swift` from the repository secret before compiling, so the distributed app has the key baked into the binary.
 
 ## Architecture
 

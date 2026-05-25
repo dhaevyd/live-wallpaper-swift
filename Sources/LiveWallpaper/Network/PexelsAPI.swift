@@ -2,7 +2,17 @@ import Foundation
 
 class PexelsAPI {
     static let shared = PexelsAPI()
-    private let apiKey = ProcessInfo.processInfo.environment["PEXELS_API_KEY"] ?? ""
+
+    static var configuredAPIKey: String {
+        let runtimeKey = ProcessInfo.processInfo.environment["PEXELS_API_KEY"] ?? ""
+        return runtimeKey.isEmpty ? AppConfig.bakedPexelsAPIKey : runtimeKey
+    }
+
+    static var hasAPIKey: Bool {
+        !configuredAPIKey.isEmpty
+    }
+
+    private let apiKey = PexelsAPI.configuredAPIKey
     private let baseURL = "https://api.pexels.com/videos"
 
     private init() {}

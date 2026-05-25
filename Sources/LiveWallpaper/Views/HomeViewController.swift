@@ -80,8 +80,8 @@ class HomeViewController: NSViewController {
     }
 
     func fetchVideos() {
-        if ProcessInfo.processInfo.environment["PEXELS_API_KEY", default: ""].isEmpty {
-            showError(title: "PEXELS API KEY REQUIRED", message: "Set PEXELS_API_KEY in the launch environment, then reopen LiveWall.", retry: nil)
+        if !PexelsAPI.hasAPIKey {
+            showError(title: "PEXELS API KEY REQUIRED", message: "Set PEXELS_API_KEY for local runs, or build Wallflow through GitHub Actions with the repository secret configured.", retry: nil)
             return
         }
 
