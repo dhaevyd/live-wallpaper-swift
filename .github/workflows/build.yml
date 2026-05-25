@@ -35,7 +35,13 @@ jobs:
             -target x86_64-apple-macosx11.0 \
             -framework Cocoa \
             -framework AVFoundation \
-            -framework AVKit
+            -framework AVKit \
+            -o LiveWallpaper 2>&1
+
+      - name: Check binary exists
+        run: |
+          ls -la
+          file LiveWallpaper
 
       - name: Create .app Bundle
         run: |
