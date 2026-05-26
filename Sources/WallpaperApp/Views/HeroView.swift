@@ -3,6 +3,7 @@ import SwiftUI
 struct HeroView: View {
     let featured: Wallpaper
     let thumbnails: [Wallpaper]
+    var isLoading: Bool = false
     var onViewWallpaper: ((Wallpaper) -> Void)? = nil
     var onThumbnailTap: ((Wallpaper) -> Void)? = nil
 
@@ -21,6 +22,15 @@ struct HeroView: View {
             thumbnailStrip
 
             heroInfo
+
+            if isLoading {
+                Color.black.opacity(0.45)
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .tint(Color.wallflowAccent)
+                    .scaleEffect(1.2)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
         .frame(maxWidth: .infinity)
         .frame(height: 500)

@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - Display model
+
 struct Wallpaper: Identifiable {
     let id: Int
     let title: String
@@ -53,6 +55,28 @@ struct Wallpaper: Identifiable {
             imageURL: nil,
             videoURL: nil,
             isPro: i % 4 == 0
+        )
+    }
+}
+
+// MARK: - Bridge from PexelsVideo
+
+extension Wallpaper {
+    init(from video: PexelsVideo) {
+        let file = video.bestVideoFile
+        let res: String = {
+            guard let f = file, let w = f.width, let h = f.height else { return "" }
+            return "\(w) × \(h)"
+        }()
+        self.init(
+            id: video.id,
+            title: video.title,
+            photographer: video.user.name,
+            resolution: res,
+            duration: video.duration,
+            imageURL: URL(string: video.image),
+            videoURL: file.flatMap { URL(string: $0.link) },
+            isPro: false
         )
     }
 }
