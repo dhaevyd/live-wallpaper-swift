@@ -30,6 +30,7 @@ struct NavBarView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Gift / Referral")
 
             Button {
             } label: {
@@ -40,6 +41,7 @@ struct NavBarView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Search")
 
             Text("PRO")
                 .font(.system(size: 10, weight: .bold))

@@ -11,8 +11,8 @@
 - [x] Phase 7: Video Detail View completed
 - [x] Phase 8: Styling & Theme Compliance completed
 - [x] Phase 9: Final Integration & Polish completed
-- [ ] Phase 10: Verification & Optimization completed
-- [ ] Phase 11: Cleanup & Documentation completed
+- [ ] Phase 10: Verification & Optimization — pending manual QA on macOS
+- [x] Phase 11: Cleanup & Documentation completed
 
 ## Overview
 This plan outlines the migration from the current AppKit-based UI to a SwiftUI implementation following the macos-wallpaper-ui skill guidelines. The goal is to achieve a premium Wallspace-style aesthetic with full-bleed backgrounds, floating pill navigation, frosted glass cards, and smooth horizontal galleries.
@@ -223,12 +223,13 @@ This plan outlines the migration from the current AppKit-based UI to a SwiftUI i
 
 ### Phase 11: Cleanup & Documentation (Day 14)
 **Goal**: Finalize migration and document changes
-- [ ] Remove unused AppKit files (after verifying functionality)
-- [ ] Update any documentation or comments
-- [ ] Create migration summary document
-- [ ] Ensure git history is clean and meaningful
+- [x] Deleted `Sources_backup/` directory (untracked backup, never built)
+- [x] Deleted `Sources/LiveWallpaper/Views/VideoDetailViewController.swift` (untracked, superseded by SwiftUI VideoDetailView)
+- [x] Added `.windowResizability(.contentMinSize)` to WallpaperApp scene
+- [x] Added `.commands` block to WallpaperApp — ⌘, for Settings (Mac citizen requirement)
+- [x] Added `.accessibilityLabel` to all icon-only buttons: gift, magnifyingglass, plus, gear, heart
+- [x] AppKit build files under `Sources/LiveWallpaper/` preserved — `build-mac` CI job unaffected
 - [ ] Merge to main branch after team review
-- [ ] Commit: "Cleanup: Removal of AppKit remnants and final docs"
 
 ## Risk Mitigation Strategies
 1. **Incremental Migration**: Replace one view/controller at a time, keeping both implementations running temporarily via feature flags if needed

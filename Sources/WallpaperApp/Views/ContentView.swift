@@ -44,6 +44,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+                .accessibilityLabel("Add wallpaper")
 
                 Button {
                     selectedTab = .settings
@@ -54,6 +55,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+                .accessibilityLabel("Settings")
             }
         }
     }

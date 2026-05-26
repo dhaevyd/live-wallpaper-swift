@@ -123,6 +123,7 @@ struct HeroView: View {
                         .background(Color.white.opacity(0.12), in: Circle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(isFavourite ? "Remove from favourites" : "Add to favourites")
             }
             .padding(.top, 4)
         }
