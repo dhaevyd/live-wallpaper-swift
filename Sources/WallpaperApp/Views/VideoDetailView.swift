@@ -7,27 +7,34 @@ struct VideoDetailView: View {
 
     @StateObject private var download = DownloadState()
     @State private var player: AVPlayer? = nil
+    @State private var isVideoPlaying = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
-            // Video or poster background
-            Group {
-                if let player {
-                    VideoPlayerView(player: player)
-                } else {
-                    AsyncImage(url: wallpaper.imageURL) { phase in
-                        switch phase {
-                        case .success(let img): img.resizable().scaledToFill()
-                        default: Color.wallflowBackground
-                        }
-                    }
-                }
-            }
-            .ignoresSafeArea()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Poster or live video background
+            posterOrVideo
+                .ignoresSafeArea()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Gradient overlay
+            // Play button overlay (when not yet playing)
+            if !isVideoPlaying {
+                Button {
+                    startVideo()
+                } label: {
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 72))
+                        .foregroundStyle(.white.opacity(0.88))
+                        .shadow(color: .black.opacity(0.5), radius: 24)
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .accessibilityLabel("Preview video")
+                .transition(reduceMotion ? .identity : .opacity.animation(.easeOut(duration: 0.2)))
+            }
+
+            // Gradient overlay for readability
             LinearGradient(
                 colors: [.clear, .black.opacity(0.9)],
                 startPoint: .top,
@@ -126,16 +133,33 @@ struct VideoDetailView: View {
         }
         .background(Color.wallflowBackground)
         .onAppear {
-            setupPlayer()
             download.checkDownloaded(id: wallpaper.id)
         }
         .onDisappear { player?.pause() }
     }
 
-    private func setupPlayer() {
+    // MARK: - Background view
+
+    @ViewBuilder
+    private var posterOrVideo: some View {
+        if isVideoPlaying, let player {
+            VideoPlayerView(player: player)
+        } else {
+            AsyncImage(url: wallpaper.imageURL) { phase in
+                switch phase {
+                case .success(let img): img.resizable().scaledToFill()
+                default: Color.wallflowBackground
+                }
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func startVideo() {
         guard let url = wallpaper.videoURL else { return }
         let p = AVPlayer(url: url)
-        p.isMuted = true
+        p.isMuted = false
         p.actionAtItemEnd = .none
         NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
@@ -144,6 +168,9 @@ struct VideoDetailView: View {
         ) { _ in p.seek(to: .zero); p.play() }
         p.play()
         player = p
+        withAnimation(reduceMotion ? nil : .easeIn(duration: 0.3)) {
+            isVideoPlaying = true
+        }
     }
 }
 
@@ -204,38 +231,5 @@ private final class DownloadState: ObservableObject {
             DispatchQueue.main.async { self?.progress = p.fractionCompleted }
         }
         task.resume()
-    }
-}
-
-// MARK: - AVPlayer NSViewRepresentable
-
-private struct VideoPlayerView: NSViewRepresentable {
-    let player: AVPlayer
-
-    func makeNSView(context: Context) -> PlayerNSView {
-        let view = PlayerNSView()
-        view.player = player
-        return view
-    }
-
-    func updateNSView(_ view: PlayerNSView, context: Context) {
-        view.player = player
-    }
-
-    final class PlayerNSView: NSView {
-        var player: AVPlayer? {
-            didSet { playerLayer.player = player }
-        }
-
-        override func makeBackingLayer() -> CALayer { AVPlayerLayer() }
-        override var wantsUpdateLayer: Bool { true }
-
-        var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
-
-        override func layout() {
-            super.layout()
-            playerLayer.frame = bounds
-            playerLayer.videoGravity = .resizeAspectFill
-        }
     }
 }

@@ -30,6 +30,7 @@ swiftc \
   Sources/WallpaperApp/Views/VideoDetailView.swift \
   Sources/WallpaperApp/Components/WallpaperCard.swift \
   Sources/WallpaperApp/Components/ThumbnailCard.swift \
+  Sources/WallpaperApp/Components/VideoPlayerView.swift \
   Sources/WallpaperApp/Styles/NavPillStyle.swift \
   Sources/WallpaperApp/Styles/HeroButtonStyle.swift \
   Sources/WallpaperApp/Extensions/Color+Hex.swift \

@@ -87,7 +87,8 @@ struct ContentView: View {
                         HeroView(
                             featured: vm.featured,
                             thumbnails: vm.featuredThumbnails,
-                            isLoading: vm.isLoadingHome
+                            isLoading: vm.isLoadingHome,
+                            onViewWallpaper: { selectedWallpaper = $0 }
                         )
 
                         if !vm.curatedPicks.isEmpty {
