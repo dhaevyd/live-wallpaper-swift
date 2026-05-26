@@ -19,6 +19,13 @@ struct VideoPlayerView: NSViewRepresentable {
             didSet { playerLayer.player = player }
         }
 
+        override init(frame: NSRect) {
+            super.init(frame: frame)
+            wantsLayer = true
+        }
+
+        required init?(coder: NSCoder) { fatalError("not used") }
+
         override func makeBackingLayer() -> CALayer { AVPlayerLayer() }
         override var wantsUpdateLayer: Bool { true }
 
