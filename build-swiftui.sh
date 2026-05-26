@@ -8,6 +8,8 @@ swiftc \
   Sources/WallpaperApp/Views/ContentView.swift \
   Sources/WallpaperApp/Views/NavBarView.swift \
   Sources/WallpaperApp/Views/HeroView.swift \
+  Sources/WallpaperApp/Views/GalleryRowView.swift \
+  Sources/WallpaperApp/Components/WallpaperCard.swift \
   Sources/WallpaperApp/Components/ThumbnailCard.swift \
   Sources/WallpaperApp/Styles/NavPillStyle.swift \
   Sources/WallpaperApp/Styles/HeroButtonStyle.swift \

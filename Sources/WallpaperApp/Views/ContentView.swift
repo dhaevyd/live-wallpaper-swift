@@ -21,12 +21,25 @@ struct ContentView: View {
         switch selectedTab {
         case .home:
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 28) {
                     HeroView(
                         featured: .placeholder,
                         thumbnails: Wallpaper.mockThumbnails
                     )
-                    Spacer()
+
+                    GalleryRowView(
+                        title: "Wallflow Picks",
+                        subtitle: "Curated selection of the finest wallpapers",
+                        wallpapers: Wallpaper.mockGallery
+                    )
+
+                    GalleryRowView(
+                        title: "Trending Now",
+                        subtitle: "What the community is watching this week",
+                        wallpapers: Wallpaper.mockGallery.reversed()
+                    )
+
+                    Spacer(minLength: 40)
                 }
             }
             .scrollIndicators(.never)

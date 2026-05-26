@@ -42,4 +42,17 @@ struct Wallpaper: Identifiable {
             isPro: i % 3 == 0
         )
     }
+
+    static let mockGallery: [Wallpaper] = (100...111).map { i in
+        Wallpaper(
+            id: i,
+            title: "Scene \(i - 99)",
+            photographer: "Artist \(i - 99)",
+            resolution: i % 2 == 0 ? "3840 × 2160" : "2560 × 1440",
+            duration: 20 + (i % 5) * 10,
+            imageURL: nil,
+            videoURL: nil,
+            isPro: i % 4 == 0
+        )
+    }
 }
