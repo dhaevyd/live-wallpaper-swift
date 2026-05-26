@@ -2,15 +2,16 @@ import Cocoa
 
 enum WallflowAssets {
     static var statusBarIcon: NSImage? {
-        image(named: "Wallflow")
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        return image(named: isDark ? "light-status-logo" : "dark-status-logo") ?? image(named: "app-logo")
     }
 
     static var appIcon: NSImage? {
-        image(named: "Wallflow")
+        image(named: "app-logo")
     }
 
     static var wordmark: NSImage? {
-        image(named: "Wallflow Logo") ?? image(named: "Wallflow")
+        image(named: "Wallflow Logo") ?? image(named: "app-logo")
     }
 
     static func image(named name: String) -> NSImage? {

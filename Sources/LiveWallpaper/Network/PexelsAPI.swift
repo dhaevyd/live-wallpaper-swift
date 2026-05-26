@@ -32,7 +32,7 @@ class PexelsAPI {
         !configuredAPIKey.isEmpty
     }
 
-    private let apiKey = PexelsAPI.configuredAPIKey
+    private var apiKey: String { PexelsAPI.configuredAPIKey }
     private let baseURL = "https://api.pexels.com/videos"
 
     private init() {}

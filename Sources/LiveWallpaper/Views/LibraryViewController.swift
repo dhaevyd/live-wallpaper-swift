@@ -8,6 +8,7 @@ class LibraryViewController: NSViewController {
 
     private var collectionView: NSCollectionView!
     private var collectionLayout: NSCollectionViewFlowLayout!
+    private var scrollView: NSScrollView!
     private let folderLabel = WallflowTheme.label("", size: 11, weight: .regular, color: WallflowTheme.textSecondary)
     private let countLabel = WallflowTheme.label("0 VIDEOS", size: 11, weight: .bold, color: WallflowTheme.textSecondary, tracking: 2)
     private var emptyView: NSView?
@@ -77,7 +78,7 @@ class LibraryViewController: NSViewController {
         collectionView.autoresizingMask = [.width]
         collectionView.register(LibraryVideoItem.self, forItemWithIdentifier: LibraryVideoItem.identifier)
 
-        let scrollView = NSScrollView()
+        scrollView = NSScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.documentView = collectionView
         scrollView.hasVerticalScroller = true
@@ -129,8 +130,17 @@ class LibraryViewController: NSViewController {
 
     override func viewDidLayout() {
         super.viewDidLayout()
-        updateCollectionLayout(for: collectionView?.bounds.width ?? view.bounds.width)
+        let w = contentWidth()
+        if w > 0 {
+            collectionView.frame = NSRect(x: 0, y: 0, width: w, height: collectionView.frame.height)
+        }
+        updateCollectionLayout(for: w)
         collectionLayout?.invalidateLayout()
+    }
+
+    private func contentWidth() -> CGFloat {
+        let w = scrollView?.frame.width ?? 0
+        return w > 0 ? w : view.frame.width
     }
 
     func loadVideos() {
@@ -141,7 +151,11 @@ class LibraryViewController: NSViewController {
         countLabel.stringValue = "\(videoURLs.count) VIDEOS"
         collectionView?.isHidden = videoURLs.isEmpty
         emptyView?.isHidden = !videoURLs.isEmpty
-        updateCollectionLayout(for: collectionView?.bounds.width ?? view.bounds.width)
+        let w = contentWidth()
+        if w > 0 {
+            collectionView?.frame = NSRect(x: 0, y: 0, width: w, height: collectionView?.frame.height ?? 0)
+        }
+        updateCollectionLayout(for: w)
         collectionView?.reloadData()
         collectionLayout?.invalidateLayout()
     }
@@ -194,6 +208,7 @@ extension LibraryViewController: NSCollectionViewDataSource, NSCollectionViewDel
 
 class LibraryVideoItem: NSCollectionViewItem {
     static let identifier = NSUserInterfaceItemIdentifier("LibraryVideoItem")
+    private static let thumbnailCache = NSCache<NSURL, NSImage>()
     var onSelect: ((URL) -> Void)?
 
     private var videoURL: URL?
@@ -265,6 +280,10 @@ class LibraryVideoItem: NSCollectionViewItem {
     }
 
     private func generateThumbnail(url: URL) {
+        if let cached = LibraryVideoItem.thumbnailCache.object(forKey: url as NSURL) {
+            thumbnailView.image = cached
+            return
+        }
         thumbnailView.image = nil
         let asset = AVAsset(url: url)
         let generator = AVAssetImageGenerator(asset: asset)
@@ -274,7 +293,9 @@ class LibraryVideoItem: NSCollectionViewItem {
             let cgImage = try? generator.copyCGImage(at: time, actualTime: nil)
             DispatchQueue.main.async {
                 guard self.videoURL == url, let cgImage = cgImage else { return }
-                self.thumbnailView.image = NSImage(cgImage: cgImage, size: .zero)
+                let image = NSImage(cgImage: cgImage, size: .zero)
+                LibraryVideoItem.thumbnailCache.setObject(image, forKey: url as NSURL)
+                self.thumbnailView.image = image
             }
         }
     }
