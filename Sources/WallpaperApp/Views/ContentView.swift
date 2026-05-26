@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var vm = WallpaperViewModel()
     @State private var selectedTab: NavTab = .home
+    @State private var selectedWallpaper: Wallpaper? = nil
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -13,6 +14,14 @@ struct ContentView: View {
 
             NavBarView(selectedTab: $selectedTab)
                 .padding(.top, 16)
+
+            if let wallpaper = selectedWallpaper {
+                VideoDetailView(wallpaper: wallpaper) {
+                    selectedWallpaper = nil
+                }
+                .transition(.opacity)
+                .zIndex(10)
+            }
         }
         .preferredColorScheme(.dark)
         .task { vm.fetchHome() }
@@ -80,7 +89,8 @@ struct ContentView: View {
                             GalleryRowView(
                                 title: "Wallflow Picks",
                                 subtitle: "Curated selection of the finest wallpapers",
-                                wallpapers: vm.curatedPicks
+                                wallpapers: vm.curatedPicks,
+                                onCardTap: { selectedWallpaper = $0 }
                             )
                         }
 
@@ -119,7 +129,8 @@ struct ContentView: View {
                             GalleryRowView(
                                 title: vm.selectedCategory?.name ?? "Search Results",
                                 subtitle: "\(vm.exploreResults.count) wallpapers",
-                                wallpapers: vm.exploreResults
+                                wallpapers: vm.exploreResults,
+                                onCardTap: { selectedWallpaper = $0 }
                             )
                         }
 

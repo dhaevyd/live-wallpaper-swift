@@ -27,6 +27,7 @@ swiftc \
   Sources/WallpaperApp/Views/NavBarView.swift \
   Sources/WallpaperApp/Views/HeroView.swift \
   Sources/WallpaperApp/Views/GalleryRowView.swift \
+  Sources/WallpaperApp/Views/VideoDetailView.swift \
   Sources/WallpaperApp/Components/WallpaperCard.swift \
   Sources/WallpaperApp/Components/ThumbnailCard.swift \
   Sources/WallpaperApp/Styles/NavPillStyle.swift \
