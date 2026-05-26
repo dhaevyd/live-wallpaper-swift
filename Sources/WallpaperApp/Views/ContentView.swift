@@ -20,7 +20,16 @@ struct ContentView: View {
     private var tabContent: some View {
         switch selectedTab {
         case .home:
-            tabPlaceholder("Home", icon: "house.fill")
+            ScrollView {
+                VStack(spacing: 0) {
+                    HeroView(
+                        featured: .placeholder,
+                        thumbnails: Wallpaper.mockThumbnails
+                    )
+                    Spacer()
+                }
+            }
+            .scrollIndicators(.never)
         case .explore:
             tabPlaceholder("Explore", icon: "safari.fill")
         case .library:

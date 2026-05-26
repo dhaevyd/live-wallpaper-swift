@@ -4,8 +4,11 @@ set -e
 
 swiftc \
   Sources/WallpaperApp/WallpaperApp.swift \
+  Sources/WallpaperApp/Models/Wallpaper.swift \
   Sources/WallpaperApp/Views/ContentView.swift \
   Sources/WallpaperApp/Views/NavBarView.swift \
+  Sources/WallpaperApp/Views/HeroView.swift \
+  Sources/WallpaperApp/Components/ThumbnailCard.swift \
   Sources/WallpaperApp/Styles/NavPillStyle.swift \
   Sources/WallpaperApp/Styles/HeroButtonStyle.swift \
   Sources/WallpaperApp/Extensions/Color+Hex.swift \
