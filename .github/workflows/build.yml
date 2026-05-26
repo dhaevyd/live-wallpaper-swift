@@ -1,131 +1,11 @@
-name: Build Mac Swift App
+name: Build Wallflow
 
 on:
   push:
     branches: [ main, swiftui-migration ]
 
 jobs:
-  build-mac:
-    runs-on: macos-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Swift App
-        env:
-          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          key = os.environ.get("PEXELS_API_KEY", "")
-          Path("Sources/LiveWallpaper/AppConfig.swift").write_text(
-              "import Foundation\n\n"
-              "enum AppConfig {\n"
-              f"    static let bakedPexelsAPIKey = {json.dumps(key)}\n"
-              "}\n"
-          )
-          PY
-
-          swiftc \
-            Sources/LiveWallpaper/main.swift \
-            Sources/LiveWallpaper/AppDelegate.swift \
-            Sources/LiveWallpaper/AppConfig.swift \
-            Sources/LiveWallpaper/WallflowAssets.swift \
-            Sources/LiveWallpaper/StatusBarController.swift \
-            Sources/LiveWallpaper/WallpaperController.swift \
-            Sources/LiveWallpaper/WallpaperWindow.swift \
-            Sources/LiveWallpaper/Network/PexelsAPI.swift \
-            Sources/LiveWallpaper/Network/VideoDownloader.swift \
-            Sources/LiveWallpaper/Models/Video.swift \
-            Sources/LiveWallpaper/Models/Category.swift \
-            Sources/LiveWallpaper/Views/MainWindowController.swift \
-            Sources/LiveWallpaper/Views/HomeViewController.swift \
-            Sources/LiveWallpaper/Views/ExploreViewController.swift \
-            Sources/LiveWallpaper/Views/LibraryViewController.swift \
-            Sources/LiveWallpaper/Views/SettingsViewController.swift \
-            Sources/LiveWallpaper/Views/Components/SidebarView.swift \
-            Sources/LiveWallpaper/Views/Components/ImageCache.swift \
-            Sources/LiveWallpaper/Views/Components/HeroView.swift \
-            Sources/LiveWallpaper/Views/Components/VideoCardView.swift \
-            -target x86_64-apple-macosx11.0 \
-            -framework Cocoa \
-            -framework AVFoundation \
-            -framework AVKit \
-            -o Wallflow 2>&1
-
-      - name: Check binary exists
-        run: |
-          ls -la
-          file Wallflow
-
-      - name: Create .app Bundle
-        run: |
-          mkdir -p Wallflow.app/Contents/MacOS
-          mkdir -p Wallflow.app/Contents/Resources
-          cp "Images/app-logo.png" "Wallflow.app/Contents/Resources/app-logo.png"
-          cp "Images/Wallflow Logo.png" "Wallflow.app/Contents/Resources/Wallflow Logo.png"
-          cp "Images/dark-status-logo.png" "Wallflow.app/Contents/Resources/dark-status-logo.png"
-          cp "Images/light-status-logo.png" "Wallflow.app/Contents/Resources/light-status-logo.png"
-          mkdir -p Wallflow.iconset
-          sips -z 16 16 "Images/app-logo.png" --out Wallflow.iconset/icon_16x16.png
-          sips -z 32 32 "Images/app-logo.png" --out Wallflow.iconset/icon_16x16@2x.png
-          sips -z 32 32 "Images/app-logo.png" --out Wallflow.iconset/icon_32x32.png
-          sips -z 64 64 "Images/app-logo.png" --out Wallflow.iconset/icon_32x32@2x.png
-          sips -z 128 128 "Images/app-logo.png" --out Wallflow.iconset/icon_128x128.png
-          sips -z 256 256 "Images/app-logo.png" --out Wallflow.iconset/icon_128x128@2x.png
-          sips -z 256 256 "Images/app-logo.png" --out Wallflow.iconset/icon_256x256.png
-          sips -z 512 512 "Images/app-logo.png" --out Wallflow.iconset/icon_256x256@2x.png
-          sips -z 512 512 "Images/app-logo.png" --out Wallflow.iconset/icon_512x512.png
-          sips -z 1024 1024 "Images/app-logo.png" --out Wallflow.iconset/icon_512x512@2x.png
-          iconutil -c icns Wallflow.iconset -o Wallflow.app/Contents/Resources/Wallflow.icns
-          mv Wallflow Wallflow.app/Contents/MacOS/
-          cat > Wallflow.app/Contents/Info.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>Wallflow</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.livewallpaper.app</string>
-              <key>CFBundleName</key>
-              <string>Wallflow</string>
-              <key>CFBundleIconFile</key>
-              <string>Wallflow</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
-              <key>CFBundleVersion</key>
-              <string>1</string>
-              <key>LSMinimumSystemVersion</key>
-              <string>11.0</string>
-              <key>NSHighResolutionCapable</key>
-              <true/>
-              <key>NSPrincipalClass</key>
-              <string>NSApplication</string>
-          </dict>
-          </plist>
-          EOF
-
-      - name: Zip .app
-        run: |
-          zip -r Wallflow.zip Wallflow.app
-
-      - name: Upload .app
-        uses: actions/upload-artifact@v4
-        with:
-          name: Wallflow
-          path: Wallflow.zip
-
-  build-swiftui:
+  build:
     runs-on: macos-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -174,7 +54,67 @@ jobs:
             -framework Cocoa \
             -framework SwiftUI \
             -framework AVFoundation \
-            -o WallflowSwiftUI 2>&1
+            -o Wallflow 2>&1
 
       - name: Check binary exists
-        run: file WallflowSwiftUI
+        run: file Wallflow
+
+      - name: Create .app Bundle
+        run: |
+          mkdir -p Wallflow.app/Contents/MacOS
+          mkdir -p Wallflow.app/Contents/Resources
+          cp "Images/app-logo.png" "Wallflow.app/Contents/Resources/app-logo.png"
+          cp "Images/Wallflow Logo.png" "Wallflow.app/Contents/Resources/Wallflow Logo.png"
+          cp "Images/dark-status-logo.png" "Wallflow.app/Contents/Resources/dark-status-logo.png"
+          cp "Images/light-status-logo.png" "Wallflow.app/Contents/Resources/light-status-logo.png"
+          mkdir -p Wallflow.iconset
+          sips -z 16 16     "Images/app-logo.png" --out Wallflow.iconset/icon_16x16.png
+          sips -z 32 32     "Images/app-logo.png" --out Wallflow.iconset/icon_16x16@2x.png
+          sips -z 32 32     "Images/app-logo.png" --out Wallflow.iconset/icon_32x32.png
+          sips -z 64 64     "Images/app-logo.png" --out Wallflow.iconset/icon_32x32@2x.png
+          sips -z 128 128   "Images/app-logo.png" --out Wallflow.iconset/icon_128x128.png
+          sips -z 256 256   "Images/app-logo.png" --out Wallflow.iconset/icon_128x128@2x.png
+          sips -z 256 256   "Images/app-logo.png" --out Wallflow.iconset/icon_256x256.png
+          sips -z 512 512   "Images/app-logo.png" --out Wallflow.iconset/icon_256x256@2x.png
+          sips -z 512 512   "Images/app-logo.png" --out Wallflow.iconset/icon_512x512.png
+          sips -z 1024 1024 "Images/app-logo.png" --out Wallflow.iconset/icon_512x512@2x.png
+          iconutil -c icns Wallflow.iconset -o Wallflow.app/Contents/Resources/Wallflow.icns
+          mv Wallflow Wallflow.app/Contents/MacOS/
+          cat > Wallflow.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>Wallflow</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.livewallpaper.app</string>
+              <key>CFBundleName</key>
+              <string>Wallflow</string>
+              <key>CFBundleIconFile</key>
+              <string>Wallflow</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>2.0</string>
+              <key>CFBundleVersion</key>
+              <string>2</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>13.0</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>NSPrincipalClass</key>
+              <string>NSApplication</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Zip .app
+        run: zip -r Wallflow.zip Wallflow.app
+
+      - name: Upload .app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wallflow
+          path: Wallflow.zip
