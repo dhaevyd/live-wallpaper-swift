@@ -50,13 +50,13 @@ final class WallpaperViewModel: ObservableObject {
     // MARK: - Fetch explore category
 
     func fetchCategory(_ category: Category) {
+        selectedCategory = category
+        exploreError = nil
         guard PexelsAPI.hasAPIKey else {
-            exploreError = "PEXELS_API_KEY not configured."
+            exploreError = "PEXELS_API_KEY not configured. Set the env var or build via GitHub Actions."
             return
         }
-        selectedCategory = category
         isLoadingExplore = true
-        exploreError = nil
 
         PexelsAPI.shared.fetchCategory(category: category) { [weak self] result in
             guard let self else { return }

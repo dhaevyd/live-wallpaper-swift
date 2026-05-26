@@ -25,6 +25,9 @@ struct ContentView: View {
         }
         .preferredColorScheme(.dark)
         .task { vm.fetchHome() }
+        .onReceive(NotificationCenter.default.publisher(for: .wallflowSwitchTab)) { note in
+            if let tab = note.object as? NavTab { selectedTab = tab }
+        }
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack(spacing: 6) {
@@ -107,45 +110,49 @@ struct ContentView: View {
     // MARK: - Explore
 
     private var exploreTab: some View {
-        Group {
-            if let error = vm.exploreError {
-                apiErrorView(message: error) {
-                    if let cat = vm.selectedCategory {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                categoryChips
+
+                if let error = vm.exploreError {
+                    apiErrorView(message: error) {
+                        let cat = vm.selectedCategory ?? Category.all[0]
                         vm.fetchCategory(cat)
-                    } else {
-                        vm.fetchCategory(Category.all[0])
                     }
+                } else if vm.isLoadingExplore {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(Color.wallflowAccent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 80)
+                } else if !vm.exploreResults.isEmpty {
+                    GalleryRowView(
+                        title: vm.selectedCategory?.name ?? "Search Results",
+                        subtitle: "\(vm.exploreResults.count) wallpapers",
+                        wallpapers: vm.exploreResults,
+                        onCardTap: { selectedWallpaper = $0 }
+                    )
+                } else if vm.selectedCategory != nil {
+                    VStack(spacing: 12) {
+                        Image(systemName: "photo.on.rectangle.angled")
+                            .font(.system(size: 36, weight: .ultraLight))
+                            .foregroundStyle(Color.wallflowAccent.opacity(0.4))
+                        Text("No results found")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 80)
                 }
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 28) {
-                        categoryChips
 
-                        if vm.isLoadingExplore {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .tint(Color.wallflowAccent)
-                                .frame(maxWidth: .infinity)
-                                .padding(.top, 80)
-                        } else if !vm.exploreResults.isEmpty {
-                            GalleryRowView(
-                                title: vm.selectedCategory?.name ?? "Search Results",
-                                subtitle: "\(vm.exploreResults.count) wallpapers",
-                                wallpapers: vm.exploreResults,
-                                onCardTap: { selectedWallpaper = $0 }
-                            )
-                        }
-
-                        Spacer(minLength: 40)
-                    }
-                    .padding(.top, 16)
-                }
-                .scrollIndicators(.never)
-                .task {
-                    if vm.exploreResults.isEmpty {
-                        vm.fetchCategory(Category.all[0])
-                    }
-                }
+                Spacer(minLength: 40)
+            }
+            .padding(.top, 16)
+        }
+        .scrollIndicators(.never)
+        .task {
+            if vm.exploreResults.isEmpty && vm.exploreError == nil {
+                vm.fetchCategory(Category.all[0])
             }
         }
     }

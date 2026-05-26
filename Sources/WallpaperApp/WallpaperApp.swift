@@ -1,5 +1,9 @@
 import SwiftUI
 
+extension Notification.Name {
+    static let wallflowSwitchTab = Notification.Name("wallflowSwitchTab")
+}
+
 @main
 struct WallpaperApp: App {
     var body: some Scene {
@@ -12,12 +16,21 @@ struct WallpaperApp: App {
         .commands {
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") {
-                    // Tab switch handled inside ContentView via NotificationCenter or @AppStorage;
-                    // for now opening the window is sufficient — settings tab is reachable via nav bar.
+                    NotificationCenter.default.post(name: .wallflowSwitchTab, object: NavTab.settings)
                 }
                 .keyboardShortcut(",", modifiers: .command)
             }
-            CommandGroup(replacing: .newItem) {}   // suppress default "New Window" noise
+            CommandGroup(replacing: .newItem) {}
+            CommandMenu("View") {
+                Button("Home")     { NotificationCenter.default.post(name: .wallflowSwitchTab, object: NavTab.home) }
+                    .keyboardShortcut("1", modifiers: .command)
+                Button("Explore")  { NotificationCenter.default.post(name: .wallflowSwitchTab, object: NavTab.explore) }
+                    .keyboardShortcut("2", modifiers: .command)
+                Button("Library")  { NotificationCenter.default.post(name: .wallflowSwitchTab, object: NavTab.library) }
+                    .keyboardShortcut("3", modifiers: .command)
+                Button("Settings") { NotificationCenter.default.post(name: .wallflowSwitchTab, object: NavTab.settings) }
+                    .keyboardShortcut("4", modifiers: .command)
+            }
         }
     }
 }
