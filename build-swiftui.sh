@@ -32,7 +32,7 @@ swiftc \
   Sources/WallpaperApp/Styles/NavPillStyle.swift \
   Sources/WallpaperApp/Styles/HeroButtonStyle.swift \
   Sources/WallpaperApp/Extensions/Color+Hex.swift \
-  -target x86_64-apple-macosx12.0 \
+  -target x86_64-apple-macosx13.0 \
   -framework Cocoa \
   -framework SwiftUI \
   -framework AVFoundation \
