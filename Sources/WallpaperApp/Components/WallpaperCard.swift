@@ -5,6 +5,7 @@ struct WallpaperCard: View {
     var onTap: ((Wallpaper) -> Void)? = nil
 
     @State private var isHovered = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -26,12 +27,12 @@ struct WallpaperCard: View {
         }
         .frame(width: 300, height: 180)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .scaleEffect(isHovered ? 1.03 : 1.0)
+        .scaleEffect(isHovered && !reduceMotion ? 1.03 : 1.0)
         .shadow(
             color: .black.opacity(isHovered ? 0.4 : 0.15),
             radius: isHovered ? 16 : 6
         )
-        .animation(.easeInOut(duration: 0.18), value: isHovered)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: isHovered)
         .onHover { isHovered = $0 }
         .onTapGesture { onTap?(wallpaper) }
         .contentShape(Rectangle())

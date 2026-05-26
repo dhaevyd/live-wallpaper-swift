@@ -2,7 +2,7 @@ name: Build Mac Swift App
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, swiftui-migration ]
 
 jobs:
   build-mac:
@@ -124,3 +124,55 @@ jobs:
         with:
           name: Wallflow
           path: Wallflow.zip
+
+  build-swiftui:
+    runs-on: macos-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate AppConfig
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          key = os.environ.get("PEXELS_API_KEY", "")
+          Path("Sources/LiveWallpaper/AppConfig.swift").write_text(
+              "import Foundation\n\nenum AppConfig {\n"
+              f"    static let bakedPexelsAPIKey = {json.dumps(key)}\n}}\n"
+          )
+          PY
+
+      - name: Build SwiftUI App
+        run: |
+          swiftc \
+            Sources/LiveWallpaper/AppConfig.swift \
+            Sources/LiveWallpaper/Models/Video.swift \
+            Sources/LiveWallpaper/Models/Category.swift \
+            Sources/LiveWallpaper/Network/PexelsAPI.swift \
+            Sources/LiveWallpaper/Network/VideoDownloader.swift \
+            Sources/WallpaperApp/WallpaperApp.swift \
+            Sources/WallpaperApp/WallpaperViewModel.swift \
+            Sources/WallpaperApp/Models/Wallpaper.swift \
+            Sources/WallpaperApp/Views/ContentView.swift \
+            Sources/WallpaperApp/Views/NavBarView.swift \
+            Sources/WallpaperApp/Views/HeroView.swift \
+            Sources/WallpaperApp/Views/GalleryRowView.swift \
+            Sources/WallpaperApp/Components/WallpaperCard.swift \
+            Sources/WallpaperApp/Components/ThumbnailCard.swift \
+            Sources/WallpaperApp/Styles/NavPillStyle.swift \
+            Sources/WallpaperApp/Styles/HeroButtonStyle.swift \
+            Sources/WallpaperApp/Extensions/Color+Hex.swift \
+            -target x86_64-apple-macosx12.0 \
+            -framework Cocoa \
+            -framework SwiftUI \
+            -framework AVFoundation \
+            -o WallflowSwiftUI 2>&1
+
+      - name: Check binary exists
+        run: file WallflowSwiftUI

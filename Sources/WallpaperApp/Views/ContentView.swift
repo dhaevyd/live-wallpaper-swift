@@ -16,6 +16,37 @@ struct ContentView: View {
         }
         .preferredColorScheme(.dark)
         .task { vm.fetchHome() }
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                HStack(spacing: 6) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .foregroundStyle(Color.wallflowAccent)
+                    Text("Wallflow")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                } label: {
+                    Image(systemName: "plus")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+
+                Button {
+                    selectedTab = .settings
+                } label: {
+                    Image(systemName: "gear")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            }
+        }
     }
 
     // MARK: - Tab routing

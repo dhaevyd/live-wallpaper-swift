@@ -5,6 +5,7 @@ struct ThumbnailCard: View {
     var onTap: (() -> Void)? = nil
 
     @State private var hovered = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Group {
@@ -28,8 +29,8 @@ struct ThumbnailCard: View {
                 .strokeBorder(.white.opacity(hovered ? 0.65 : 0.2), lineWidth: 1)
         )
         .shadow(color: .black.opacity(hovered ? 0.5 : 0.2), radius: hovered ? 10 : 4)
-        .scaleEffect(hovered ? 1.04 : 1.0)
-        .animation(.easeInOut(duration: 0.16), value: hovered)
+        .scaleEffect(hovered && !reduceMotion ? 1.04 : 1.0)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.16), value: hovered)
         .onHover { hovered = $0 }
         .onTapGesture { onTap?() }
         .contentShape(Rectangle())
