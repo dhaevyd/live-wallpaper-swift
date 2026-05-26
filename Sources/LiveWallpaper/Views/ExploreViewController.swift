@@ -14,6 +14,7 @@ class ExploreViewController: NSViewController {
     private var currentCategory: Category?
     private var videos: [PexelsVideo] = []
     private var chipButtons: [CategoryChipButton] = []
+    private var fetchGeneration = 0
 
     init(wallpaperController: WallpaperController) {
         self.wallpaperController = wallpaperController
@@ -142,6 +143,8 @@ class ExploreViewController: NSViewController {
     }
 
     private func performFetch(retry: @escaping () -> Void, fetch: (@escaping (Result<[PexelsVideo], Error>) -> Void) -> Void) {
+        fetchGeneration += 1
+        let generation = fetchGeneration
         errorView?.removeFromSuperview()
         errorView = nil
         guard PexelsAPI.hasAPIKey else {
@@ -155,6 +158,7 @@ class ExploreViewController: NSViewController {
         loadingIndicator.startAnimation(nil)
         fetch { [weak self] result in
             guard let self = self else { return }
+            guard generation == self.fetchGeneration else { return }
             self.loadingIndicator.stopAnimation(nil)
             self.loadingIndicator.isHidden = true
             switch result {
@@ -166,7 +170,13 @@ class ExploreViewController: NSViewController {
                 self.updateCollectionLayout(for: self.collectionView.bounds.width)
                 self.collectionView.reloadData()
                 self.collectionLayout.invalidateLayout()
+                if videos.isEmpty {
+                    self.showError(title: "NO RESULTS", message: "Pexels returned no videos for this query.", retry: retry)
+                }
             case .failure(let error):
+                self.videos = []
+                self.resultsLabel.stringValue = "RESULTS / 0"
+                self.collectionView.reloadData()
                 self.showError(title: "FETCH FAILED", message: error.localizedDescription, retry: retry)
             }
         }

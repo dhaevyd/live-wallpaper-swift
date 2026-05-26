@@ -102,7 +102,7 @@ class SidebarView: NSView {
 
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: 64),
-            logo.topAnchor.constraint(equalTo: topAnchor, constant: 22),
+            logo.topAnchor.constraint(equalTo: topAnchor, constant: 30),
             logo.centerXAnchor.constraint(equalTo: centerXAnchor),
             logo.widthAnchor.constraint(equalToConstant: 32),
             logo.heightAnchor.constraint(equalToConstant: 32),

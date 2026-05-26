@@ -6,6 +6,7 @@ class LibraryViewController: NSViewController {
     var videoURLs: [URL] = []
     var currentFolder: URL
 
+    private static let folderBookmarkKey = "libraryFolderBookmark"
     private var collectionView: NSCollectionView!
     private var collectionLayout: NSCollectionViewFlowLayout!
     private var scrollView: NSScrollView!
@@ -15,7 +16,7 @@ class LibraryViewController: NSViewController {
 
     init(wallpaperController: WallpaperController) {
         self.wallpaperController = wallpaperController
-        self.currentFolder = LibraryViewController.defaultFolder()
+        self.currentFolder = LibraryViewController.savedFolder() ?? LibraryViewController.defaultFolder()
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -26,6 +27,17 @@ class LibraryViewController: NSViewController {
     static func defaultFolder() -> URL {
         let movies = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first!
         return movies.appendingPathComponent("LiveWallpapers")
+    }
+
+    private static func savedFolder() -> URL? {
+        guard let data = UserDefaults.standard.data(forKey: folderBookmarkKey) else { return nil }
+        var stale = false
+        return try? URL(
+            resolvingBookmarkData: data,
+            options: [.withSecurityScope],
+            relativeTo: nil,
+            bookmarkDataIsStale: &stale
+        )
     }
 
     override func loadView() {
@@ -130,11 +142,7 @@ class LibraryViewController: NSViewController {
 
     override func viewDidLayout() {
         super.viewDidLayout()
-        let w = contentWidth()
-        if w > 0 {
-            collectionView.frame = NSRect(x: 0, y: 0, width: w, height: collectionView.frame.height)
-        }
-        updateCollectionLayout(for: w)
+        resizeCollectionDocument()
         collectionLayout?.invalidateLayout()
     }
 
@@ -145,29 +153,60 @@ class LibraryViewController: NSViewController {
 
     func loadVideos() {
         let extensions = ["mp4", "mov", "avi", "mkv", "m4v"]
-        let files = (try? FileManager.default.contentsOfDirectory(at: currentFolder, includingPropertiesForKeys: nil)) ?? []
+        let didAccess = currentFolder.startAccessingSecurityScopedResource()
+        defer {
+            if didAccess {
+                currentFolder.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: currentFolder,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
         videoURLs = files.filter { extensions.contains($0.pathExtension.lowercased()) }.sorted { $0.lastPathComponent < $1.lastPathComponent }
         folderLabel.stringValue = currentFolder.path
         countLabel.stringValue = "\(videoURLs.count) VIDEOS"
-        collectionView?.isHidden = videoURLs.isEmpty
-        emptyView?.isHidden = !videoURLs.isEmpty
-        let w = contentWidth()
-        if w > 0 {
-            collectionView?.frame = NSRect(x: 0, y: 0, width: w, height: collectionView?.frame.height ?? 0)
-        }
-        updateCollectionLayout(for: w)
+        updateEmptyState()
+        resizeCollectionDocument()
         collectionView?.reloadData()
         collectionLayout?.invalidateLayout()
+    }
+
+    private func resizeCollectionDocument() {
+        let width = contentWidth()
+        guard width > 0 else { return }
+        updateCollectionLayout(for: width)
+        let columns = max(1, columnCount(for: width))
+        let rows = max(1, Int(ceil(Double(videoURLs.count) / Double(columns))))
+        let insets = collectionLayout.sectionInset.top + collectionLayout.sectionInset.bottom
+        let rowSpacing = CGFloat(max(0, rows - 1)) * collectionLayout.minimumLineSpacing
+        let height = max(scrollView?.contentSize.height ?? 0, CGFloat(rows) * collectionLayout.itemSize.height + rowSpacing + insets)
+        collectionView?.frame = NSRect(x: 0, y: 0, width: width, height: height)
+    }
+
+    private func updateEmptyState() {
+        let isEmpty = videoURLs.isEmpty
+        scrollView?.isHidden = isEmpty
+        emptyView?.isHidden = !isEmpty
     }
 
     private func updateCollectionLayout(for width: CGFloat) {
         guard width > 0 else { return }
         let insets = collectionLayout.sectionInset.left + collectionLayout.sectionInset.right
-        let available = max(240, width - insets)
-        let columns = max(1, min(4, Int((available + collectionLayout.minimumInteritemSpacing) / 236)))
+        let available = max(220, width - insets)
+        let columns = columnCount(for: width)
         let spacing = CGFloat(columns - 1) * collectionLayout.minimumInteritemSpacing
         let itemWidth = floor((available - spacing) / CGFloat(columns))
-        collectionLayout.itemSize = NSSize(width: itemWidth, height: floor(itemWidth * 0.62) + 34)
+        collectionLayout.itemSize = NSSize(width: itemWidth, height: floor(itemWidth * 0.58) + 36)
+    }
+
+    private func columnCount(for width: CGFloat) -> Int {
+        let insets = collectionLayout.sectionInset.left + collectionLayout.sectionInset.right
+        let available = max(220, width - insets)
+        let targetWidth: CGFloat = available < 520 ? 180 : 220
+        return max(1, min(6, Int((available + collectionLayout.minimumInteritemSpacing) / targetWidth)))
     }
 
     @objc func changeFolder() {
@@ -178,6 +217,13 @@ class LibraryViewController: NSViewController {
         panel.begin { response in
             if response == .OK, let url = panel.url {
                 self.currentFolder = url
+                if let bookmark = try? url.bookmarkData(
+                    options: [.withSecurityScope],
+                    includingResourceValuesForKeys: nil,
+                    relativeTo: nil
+                ) {
+                    UserDefaults.standard.set(bookmark, forKey: LibraryViewController.folderBookmarkKey)
+                }
                 self.loadVideos()
             }
         }
@@ -236,7 +282,7 @@ class LibraryVideoItem: NSCollectionViewItem {
     private func setupUI() {
         thumbnailView.translatesAutoresizingMaskIntoConstraints = false
         thumbnailView.wantsLayer = true
-        thumbnailView.imageScaling = .scaleProportionallyUpOrDown
+        thumbnailView.imageScaling = .scaleAxesIndependently
         view.addSubview(thumbnailView)
 
         titleLabel.lineBreakMode = .byTruncatingTail

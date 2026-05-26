@@ -3,6 +3,7 @@ import Foundation
 class VideoDownloader {
     static let shared = VideoDownloader()
     private var downloadTasks: [Int: URLSessionDownloadTask] = [:]
+    private var progressObservers: [Int: NSKeyValueObservation] = [:]
 
     private init() {}
 
@@ -36,6 +37,7 @@ class VideoDownloader {
             "\(video.id).mp4"
         )
         if FileManager.default.fileExists(atPath: destination.path) {
+            progress(1)
             completion(.success(destination))
             return
         }
@@ -44,29 +46,50 @@ class VideoDownloader {
         let task = URLSession.shared.downloadTask(with: url) { tempURL, _, error in
             if let error = error {
                 DispatchQueue.main.async {
+                    self.progressObservers.removeValue(forKey: video.id)
+                    self.downloadTasks.removeValue(forKey: video.id)
                     completion(.failure(error))
                 }
                 return
             }
 
-            guard let tempURL = tempURL else { return }
+            guard let tempURL = tempURL else {
+                DispatchQueue.main.async {
+                    self.progressObservers.removeValue(forKey: video.id)
+                    self.downloadTasks.removeValue(forKey: video.id)
+                }
+                return
+            }
 
             do {
+                if FileManager.default.fileExists(atPath: destination.path) {
+                    try FileManager.default.removeItem(at: destination)
+                }
                 try FileManager.default.moveItem(
                     at: tempURL,
                     to: destination
                 )
                 DispatchQueue.main.async {
+                    self.progressObservers.removeValue(forKey: video.id)
+                    self.downloadTasks.removeValue(forKey: video.id)
+                    progress(1)
                     completion(.success(destination))
                 }
             } catch {
                 DispatchQueue.main.async {
+                    self.progressObservers.removeValue(forKey: video.id)
+                    self.downloadTasks.removeValue(forKey: video.id)
                     completion(.failure(error))
                 }
             }
         }
 
         downloadTasks[video.id] = task
+        progressObservers[video.id] = task.progress.observe(\.fractionCompleted, options: [.new]) { observedProgress, _ in
+            DispatchQueue.main.async {
+                progress(observedProgress.fractionCompleted)
+            }
+        }
         task.resume()
     }
 
@@ -82,5 +105,6 @@ class VideoDownloader {
     func cancelDownload(video: PexelsVideo) {
         downloadTasks[video.id]?.cancel()
         downloadTasks.removeValue(forKey: video.id)
+        progressObservers.removeValue(forKey: video.id)
     }
 }
