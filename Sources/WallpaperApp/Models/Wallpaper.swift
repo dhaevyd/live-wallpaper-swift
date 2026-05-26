@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Display model
 
-struct Wallpaper: Identifiable {
+struct Wallpaper: Identifiable, Equatable {
     let id: Int
     let title: String
     let photographer: String
