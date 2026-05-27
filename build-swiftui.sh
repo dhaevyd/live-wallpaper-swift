@@ -20,6 +20,8 @@ swiftc \
   Sources/LiveWallpaper/Models/Category.swift \
   Sources/LiveWallpaper/Network/PexelsAPI.swift \
   Sources/LiveWallpaper/Network/VideoDownloader.swift \
+  Sources/LiveWallpaper/WallpaperController.swift \
+  Sources/LiveWallpaper/WallpaperWindow.swift \
   Sources/WallpaperApp/WallpaperApp.swift \
   Sources/WallpaperApp/WallpaperViewModel.swift \
   Sources/WallpaperApp/Models/Wallpaper.swift \

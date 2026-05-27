@@ -2,6 +2,8 @@ import Cocoa
 import AVFoundation
 
 class WallpaperController {
+    static let shared = WallpaperController()
+
     var windows: [WallpaperWindow] = []
     var currentVideoURL: URL?
     var isPlaying: Bool = false

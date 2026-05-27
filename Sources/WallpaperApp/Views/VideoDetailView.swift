@@ -7,6 +7,7 @@ struct VideoDetailView: View {
 
     @StateObject private var download = DownloadState()
     @State private var player: AVPlayer? = nil
+    @State private var loopObserver: (any NSObjectProtocol)? = nil
     @State private var isVideoPlaying = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -81,7 +82,13 @@ struct VideoDetailView: View {
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 12) {
-                    Button("SET AS WALLPAPER") {}
+                    Button("SET AS WALLPAPER") {
+                        let local = VideoDownloader.shared.downloadFolder
+                            .appendingPathComponent("\(wallpaper.id).mp4")
+                        let url = FileManager.default.fileExists(atPath: local.path)
+                            ? local : wallpaper.videoURL
+                        if let url { WallpaperController.shared.playVideo(url: url) }
+                    }
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.black)
                         .padding(.horizontal, 20)
@@ -135,7 +142,10 @@ struct VideoDetailView: View {
         .onAppear {
             download.checkDownloaded(id: wallpaper.id)
         }
-        .onDisappear { player?.pause() }
+        .onDisappear {
+            player?.pause()
+            if let obs = loopObserver { NotificationCenter.default.removeObserver(obs) }
+        }
     }
 
     // MARK: - Background view
@@ -158,10 +168,11 @@ struct VideoDetailView: View {
 
     private func startVideo() {
         guard let url = wallpaper.videoURL else { return }
+        if let obs = loopObserver { NotificationCenter.default.removeObserver(obs); loopObserver = nil }
         let p = AVPlayer(url: url)
         p.isMuted = false
         p.actionAtItemEnd = .none
-        NotificationCenter.default.addObserver(
+        loopObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: p.currentItem,
             queue: .main

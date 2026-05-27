@@ -9,6 +9,7 @@ struct HeroView: View {
 
     @State private var displayed: Wallpaper
     @State private var player: AVPlayer? = nil
+    @State private var loopObserver: (any NSObjectProtocol)? = nil
     @State private var isFavourite = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -55,7 +56,10 @@ struct HeroView: View {
             displayed = newFeatured
             setupPlayer(for: newFeatured)
         }
-        .onDisappear { player?.pause() }
+        .onDisappear {
+            player?.pause()
+            if let obs = loopObserver { NotificationCenter.default.removeObserver(obs) }
+        }
     }
 
     // MARK: - Background
@@ -174,11 +178,12 @@ struct HeroView: View {
     private func setupPlayer(for wallpaper: Wallpaper) {
         player?.pause()
         player = nil
+        if let obs = loopObserver { NotificationCenter.default.removeObserver(obs); loopObserver = nil }
         guard let url = wallpaper.videoURL else { return }
         let p = AVPlayer(url: url)
         p.isMuted = true
         p.actionAtItemEnd = .none
-        NotificationCenter.default.addObserver(
+        loopObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: p.currentItem,
             queue: .main
