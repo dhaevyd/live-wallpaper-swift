@@ -1,0 +1,6 @@
+docs/
+.superpowers/
+/LiveWallpaper
+/Wallflow
+*.o
+*.d

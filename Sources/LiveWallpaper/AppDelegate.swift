@@ -1,58 +1,36 @@
 import Cocoa
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var statusBarController: StatusBarController?
-    var wallpaperController: WallpaperController?
-    var mainWindowController: MainWindowController?
+    private var statusBar: StatusBarController!
+    private var window: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.applicationIconImage = WallflowAssets.appIcon
-
-        // Create default wallpaper folder
-        createDefaultFolder()
-
-        // Start wallpaper controller
-        wallpaperController = WallpaperController()
-
-        // Start status bar
-        statusBarController = StatusBarController(
-            wallpaperController: wallpaperController!,
-            openMainWindow: { self.openMainWindow() }
+        statusBar = StatusBarController(
+            onShow: { [weak self] in self?.showWindow() },
+            onStopAll: { [weak self] in
+                WallpaperController.shared.stopAll()
+                (self?.window?.contentViewController as? ScreenPickerViewController)?.reload()
+            }
         )
-
-        // Open main window on first launch
-        openMainWindow()
+        showWindow()
     }
 
-    func openMainWindow() {
-        if mainWindowController == nil {
-            mainWindowController = MainWindowController(
-                wallpaperController: wallpaperController!
-            )
+    func showWindow() {
+        if let w = window {
+            w.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
         }
-        mainWindowController?.showWindow(nil)
+        let vc = ScreenPickerViewController()
+        let win = NSWindow(contentViewController: vc)
+        win.title = "Wallflow"
+        win.styleMask = [.titled, .closable, .miniaturizable]
+        win.isReleasedWhenClosed = false
+        win.center()
+        win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        window = win
     }
 
-    func createDefaultFolder() {
-        let folder = defaultWallpaperFolder()
-        try? FileManager.default.createDirectory(
-            at: folder,
-            withIntermediateDirectories: true
-        )
-    }
-
-    func defaultWallpaperFolder() -> URL {
-        let movies = FileManager.default.urls(
-            for: .moviesDirectory,
-            in: .userDomainMask
-        ).first!
-        return movies.appendingPathComponent("LiveWallpapers")
-    }
-
-    func applicationShouldTerminateAfterLastWindowClosed(
-        _ sender: NSApplication
-    ) -> Bool {
-        return false
-    }
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }

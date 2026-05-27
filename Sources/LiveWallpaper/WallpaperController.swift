@@ -1,54 +1,39 @@
 import Cocoa
 import AVFoundation
 
-class WallpaperController {
+final class WallpaperController {
     static let shared = WallpaperController()
 
-    var windows: [WallpaperWindow] = []
-    var currentVideoURL: URL?
-    var isPlaying: Bool = false
-    var isMuted: Bool = true
-    var isLooping: Bool = true
+    private var windows: [CGDirectDisplayID: WallpaperWindow] = [:]
+    private var urls: [CGDirectDisplayID: URL] = [:]
 
-    func playVideo(url: URL) {
-        stopVideo()
-        currentVideoURL = url
-        isPlaying = true
-
-        for screen in NSScreen.screens {
-            let window = WallpaperWindow(screen: screen)
-            window.playVideo(url: url, muted: isMuted, loop: isLooping)
-            windows.append(window)
-        }
+    func play(url: URL, on screen: NSScreen) {
+        let id = displayID(for: screen)
+        windows[id]?.stopVideo()
+        let win = WallpaperWindow(screen: screen)
+        win.playVideo(url: url)
+        windows[id] = win
+        urls[id] = url
     }
 
-    func stopVideo() {
-        windows.forEach { $0.stopVideo() }
+    func stop(screen: NSScreen) {
+        let id = displayID(for: screen)
+        windows[id]?.stopVideo()
+        windows.removeValue(forKey: id)
+        urls.removeValue(forKey: id)
+    }
+
+    func stopAll() {
+        windows.values.forEach { $0.stopVideo() }
         windows.removeAll()
-        isPlaying = false
-        currentVideoURL = nil
+        urls.removeAll()
     }
 
-    func pauseVideo() {
-        windows.forEach { $0.pauseVideo() }
-        isPlaying = false
+    func currentURL(for screen: NSScreen) -> URL? {
+        urls[displayID(for: screen)]
     }
 
-    func resumeVideo() {
-        windows.forEach { $0.resumeVideo() }
-        isPlaying = true
-    }
-
-    func setMuted(_ muted: Bool) {
-        isMuted = muted
-        windows.forEach { $0.setMuted(muted) }
-    }
-
-    func setLooping(_ looping: Bool) {
-        isLooping = looping
-    }
-
-    var currentVideoName: String {
-        return currentVideoURL?.lastPathComponent ?? "None"
+    private func displayID(for screen: NSScreen) -> CGDirectDisplayID {
+        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
     }
 }

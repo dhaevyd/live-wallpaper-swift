@@ -7,115 +7,60 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Generate AppConfig
-        env:
-          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-        run: |
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          key = os.environ.get("PEXELS_API_KEY", "")
-          Path("Sources/LiveWallpaper/AppConfig.swift").write_text(
-              "import Foundation\n\nenum AppConfig {\n"
-              f"    static let bakedPexelsAPIKey = {json.dumps(key)}\n}}\n"
-          )
-          PY
-
-      - name: Build SwiftUI App
+      - name: Build
         run: |
           swiftc \
-            Sources/LiveWallpaper/AppConfig.swift \
-            Sources/LiveWallpaper/Models/Video.swift \
-            Sources/LiveWallpaper/Models/Category.swift \
-            Sources/LiveWallpaper/Network/PexelsAPI.swift \
-            Sources/LiveWallpaper/Network/VideoDownloader.swift \
+            Sources/LiveWallpaper/main.swift \
+            Sources/LiveWallpaper/AppDelegate.swift \
             Sources/LiveWallpaper/WallpaperController.swift \
             Sources/LiveWallpaper/WallpaperWindow.swift \
-            Sources/WallpaperApp/WallpaperApp.swift \
-            Sources/WallpaperApp/WallpaperViewModel.swift \
-            Sources/WallpaperApp/Models/Wallpaper.swift \
-            Sources/WallpaperApp/Views/ContentView.swift \
-            Sources/WallpaperApp/Views/NavBarView.swift \
-            Sources/WallpaperApp/Views/HeroView.swift \
-            Sources/WallpaperApp/Views/GalleryRowView.swift \
-            Sources/WallpaperApp/Views/VideoDetailView.swift \
-            Sources/WallpaperApp/Components/WallpaperCard.swift \
-            Sources/WallpaperApp/Components/ThumbnailCard.swift \
-            Sources/WallpaperApp/Components/VideoPlayerView.swift \
-            Sources/WallpaperApp/Styles/NavPillStyle.swift \
-            Sources/WallpaperApp/Styles/HeroButtonStyle.swift \
-            Sources/WallpaperApp/Extensions/Color+Hex.swift \
+            Sources/LiveWallpaper/StatusBarController.swift \
+            Sources/LiveWallpaper/Views/ScreenPickerViewController.swift \
             -target x86_64-apple-macosx13.0 \
             -framework Cocoa \
-            -framework SwiftUI \
             -framework AVFoundation \
-            -o Wallflow 2>&1
-
-      - name: Check binary exists
-        run: file Wallflow
+            -o Wallflow
 
       - name: Create .app Bundle
         run: |
           mkdir -p Wallflow.app/Contents/MacOS
           mkdir -p Wallflow.app/Contents/Resources
-          cp "Images/app-logo.png" "Wallflow.app/Contents/Resources/app-logo.png"
-          cp "Images/Wallflow Logo.png" "Wallflow.app/Contents/Resources/Wallflow Logo.png"
-          cp "Images/dark-status-logo.png" "Wallflow.app/Contents/Resources/dark-status-logo.png"
-          cp "Images/light-status-logo.png" "Wallflow.app/Contents/Resources/light-status-logo.png"
           mkdir -p Wallflow.iconset
           sips -z 16 16     "Images/app-logo.png" --out Wallflow.iconset/icon_16x16.png
           sips -z 32 32     "Images/app-logo.png" --out Wallflow.iconset/icon_16x16@2x.png
           sips -z 32 32     "Images/app-logo.png" --out Wallflow.iconset/icon_32x32.png
-          sips -z 64 64     "Images/app-logo.png" --out Wallflow.iconset/icon_32x32@2x.png
           sips -z 128 128   "Images/app-logo.png" --out Wallflow.iconset/icon_128x128.png
-          sips -z 256 256   "Images/app-logo.png" --out Wallflow.iconset/icon_128x128@2x.png
           sips -z 256 256   "Images/app-logo.png" --out Wallflow.iconset/icon_256x256.png
-          sips -z 512 512   "Images/app-logo.png" --out Wallflow.iconset/icon_256x256@2x.png
           sips -z 512 512   "Images/app-logo.png" --out Wallflow.iconset/icon_512x512.png
-          sips -z 1024 1024 "Images/app-logo.png" --out Wallflow.iconset/icon_512x512@2x.png
           iconutil -c icns Wallflow.iconset -o Wallflow.app/Contents/Resources/Wallflow.icns
           mv Wallflow Wallflow.app/Contents/MacOS/
           cat > Wallflow.app/Contents/Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-              <key>CFBundleExecutable</key>
-              <string>Wallflow</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.livewallpaper.app</string>
-              <key>CFBundleName</key>
-              <string>Wallflow</string>
-              <key>CFBundleIconFile</key>
-              <string>Wallflow</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>2.0</string>
-              <key>CFBundleVersion</key>
-              <string>2</string>
-              <key>LSMinimumSystemVersion</key>
-              <string>13.0</string>
-              <key>NSHighResolutionCapable</key>
-              <true/>
-              <key>NSPrincipalClass</key>
-              <string>NSApplication</string>
+              <key>CFBundleExecutable</key><string>Wallflow</string>
+              <key>CFBundleIdentifier</key><string>com.wallflow.app</string>
+              <key>CFBundleName</key><string>Wallflow</string>
+              <key>CFBundleIconFile</key><string>Wallflow</string>
+              <key>CFBundlePackageType</key><string>APPL</string>
+              <key>CFBundleShortVersionString</key><string>3.0</string>
+              <key>LSMinimumSystemVersion</key><string>13.0</string>
+              <key>NSHighResolutionCapable</key><true/>
+              <key>NSPrincipalClass</key><string>NSApplication</string>
           </dict>
           </plist>
           EOF
 
-      - name: Zip .app
+      - name: Zip
         run: zip -r Wallflow.zip Wallflow.app
 
-      - name: Upload .app
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: Wallflow
